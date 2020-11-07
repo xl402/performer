@@ -7,16 +7,6 @@ import pytest
 from random_matrix_sampler import GaussianOrthogonalRandomMatrix
 
 
-def _test_performer_scaled_dot_product_attention_approximates_keras():
-    batch_size, seq_len, dim = 5, 20, 3
-    input_shape = (batch_size, seq_len, dim)
-    query = tf.random.uniform(input_shape)
-    key = tf.random.uniform(input_shape)
-    value = tf.random.uniform(input_shape)
-    expected = tf.keras.layers.Attention()([query, key, value])
-    assert np.allclose(expected, result)
-
-
 @pytest.mark.parametrize('rows, columns', product([1, 10, 20], [1, 10, 20]))
 def test_gaussian_orthogonal_random_matrix_has_correct_shape(rows, columns):
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling=0)
