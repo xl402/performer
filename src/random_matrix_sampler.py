@@ -14,7 +14,7 @@ class GaussianOrthogonalRandomMatrix:
         block_list = []
 
         for _ in range(nb_full_blocks):
-            unstructured_block = np.random.normal(size=(self.nb_rows, self.nb_columns))
+            unstructured_block = np.random.normal(size=(self.nb_columns, self.nb_columns))
             # computes qr factorisation
             q, _ = np.linalg.qr(unstructured_block)
             q = np.transpose(q)
