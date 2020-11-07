@@ -19,8 +19,11 @@ class GaussianOrthogonalRandomMatrix:
             q, _ = np.linalg.qr(unstructured_block)
             q = np.transpose(q)
             block_list.append(q)
+
         remaining_rows = self.nb_rows - nb_full_blocks * self.nb_columns
+
         if remaining_rows > 0:
+            unstructured_block = np.random.normal(size=(self.nb_columns, self.nb_columns))
             q, _ = np.linalg.qr(unstructured_block)
             q = np.transpose(q)
             block_list.append(q[0:remaining_rows])
