@@ -24,11 +24,17 @@ def test_gaussian_orthogonal_random_matrix_has_correct_shape(rows, columns):
     assert out.shape == (rows, columns)
 
 
-@pytest.mark.parametrize('shape, scaling', product([2, 4, 100], [0, 0.1, 2]))
+@pytest.mark.parametrize('shape, scaling', product([2, 4, 100], [0, 1]))
 def test_gaussian_orthogonal_random_matrix_off_diags_are_zeros(shape, scaling):
-    rows, columns, scaling = shape, shape, 0
+    rows, columns, scaling = shape, shape, scaling
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling)
     out = sampler.get_2d_array()
     out = out @ out.T
     out = out - np.diag(np.diag(out))
     assert np.allclose(out, np.zeros(out.shape))
+
+
+def test_gaussian_orthogonal_random_matrix_raises_on_invalid_scaling_factor():
+    with pytest.raises(AssertionError) as e:
+        GaussianOrthogonalRandomMatrix(10, 10, scaling=0.1)
+    assert "Scaling must be one of {0, 1}" in str(e)

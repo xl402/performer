@@ -3,39 +3,40 @@ import numpy as np
 
 class GaussianOrthogonalRandomMatrix:
 
-    def __init__(self, nb_rows, nb_columns, scaling=0):
-        self.nb_rows = nb_rows
-        self.nb_columns = nb_columns
+    def __init__(self, rows, columns, scaling=0):
+        self.rows = rows
+        self.columns = columns
         self.scaling = scaling
+        assert self.scaling in [0, 1], 'Scaling must be one of {0, 1}'
 
     def get_2d_array(self):
-
-        nb_full_blocks = int(self.nb_rows / self.nb_columns)
+        nb_full_blocks = int(self.rows / self.columns)
         block_list = []
 
+        square_size = (self.columns, self.columns)
         for _ in range(nb_full_blocks):
-            unstructured_block = np.random.normal(size=(self.nb_columns, self.nb_columns))
-            # computes qr factorisation
+            unstructured_block = np.random.normal(size=square_size)
             q, _ = np.linalg.qr(unstructured_block)
             q = np.transpose(q)
             block_list.append(q)
 
-        remaining_rows = self.nb_rows - nb_full_blocks * self.nb_columns
+        remaining_rows = self.rows - nb_full_blocks * self.columns
 
         if remaining_rows > 0:
-            unstructured_block = np.random.normal(size=(self.nb_columns, self.nb_columns))
+            unstructured_block = np.random.normal(size=square_size)
             q, _ = np.linalg.qr(unstructured_block)
             q = np.transpose(q)
             block_list.append(q[0:remaining_rows])
         final_matrix = np.vstack(block_list)
 
-        if self.scaling == 0:
-            # seemingly a weird way of generating a random vector??
-            multiplier = np.linalg.norm(np.random.normal(size=(self.nb_rows, self.nb_columns)), axis=1)
-        elif self.scaling == 1:
-            # scale by sqrt of the number of columns
-            multiplier = np.sqrt(float(self.nb_columns)) * np.ones(shape=self.nb_rows)
-        else:
-            raise ValueError('Scaling must be one of {0, 1}. Was %s' % self.scaling)
-
+        multiplier = self._get_multiplier()
         return np.matmul(np.diag(multiplier), final_matrix)
+
+    def _get_multiplier(self):
+        if self.scaling == 0:
+            # weird way of generating a random vector??
+            size = (self.rows, self.columns)
+            multiplier = np.linalg.norm(np.random.normal(size=size), axis=1)
+        elif self.scaling == 1:
+            multiplier = np.sqrt(self.columns) * np.ones(self.rows)
+        return multiplier
