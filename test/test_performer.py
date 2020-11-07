@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from random_matrix_sampler import GaussianOrthogonalRandomMatrix
+from performer import Performer
 
 
 @pytest.mark.parametrize('rows, columns', product([1, 10, 20], [1, 10, 20]))
@@ -28,3 +29,12 @@ def test_gaussian_orthogonal_random_matrix_raises_on_invalid_scaling_factor():
     with pytest.raises(AssertionError) as e:
         GaussianOrthogonalRandomMatrix(10, 10, scaling=0.1)
     assert "Scaling must be one of {0, 1}" in str(e)
+
+
+def test_performer_compute_attention_gets_correct_output_shape():
+    layer = Performer(attention_method='quadratic', num_heads=3, key_dim=2)
+    target = tf.random.uniform(shape=[1, 18, 16], dtype='float32')
+    source = tf.random.uniform(shape=[1, 4, 16], dtype='float32')
+    output_tensor, weights = layer(target, source, return_attention_scores=True)
+    assert all(np.array(output_tensor.shape) == [1, 18, 16])
+    assert all(np.array(weights.shape) == [1, 3, 18, 4])
