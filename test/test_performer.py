@@ -33,8 +33,8 @@ def test_gaussian_orthogonal_random_matrix_raises_on_invalid_scaling_factor():
 
 def test_performer_compute_attention_gets_correct_output_shape():
     layer = Performer(attention_method='quadratic', num_heads=3, key_dim=2)
-    target = tf.random.uniform(shape=[1, 18, 16], dtype='float32')
-    source = tf.random.uniform(shape=[1, 4, 16], dtype='float32')
-    output_tensor, weights = layer(target, source, return_attention_scores=True)
+    query = tf.random.uniform(shape=[1, 18, 16], dtype='float32')
+    value = tf.random.uniform(shape=[1, 4, 16], dtype='float32')
+    output_tensor, weights = layer(query, value, return_attention_scores=True)
     assert all(np.array(output_tensor.shape) == [1, 18, 16])
     assert all(np.array(weights.shape) == [1, 3, 18, 4])
