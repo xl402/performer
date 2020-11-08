@@ -9,8 +9,8 @@ from tensorflow.python.ops import special_math_ops
 import tensorflow as tf
 
 from random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
-from attention_equation import build_linear_attention_equation
-from attention_equation import build_quadratic_attention_equation
+from build_attention import build_linear_attention_equation
+from build_attention import build_quadratic_attention_equation
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
