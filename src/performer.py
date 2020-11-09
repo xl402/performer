@@ -21,14 +21,13 @@ class Performer(MultiHeadAttention):
         attention_method = kwargs.pop('attention_method', 'quadratic')
         assert attention_method in ['linear', 'quadratic'], 'invalid attention method'
         if attention_method == 'quadratic':
+            self.scaling = kwargs.pop('scaling', 0)
+            self.supports = kwargs.pop('supports', 100)
             self._compute_attention = self.quadratic_attention
             self._build_attention_equation = build_quadratic_attention_equation
         else:
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
-
-        supports = kwargs.pop('supports', 100)
-        self.supports = supports
 
         super().__init__(*args, **kwargs)
 
