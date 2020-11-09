@@ -46,7 +46,7 @@ class GaussianOrthogonalRandomMatrix:
         return multiplier
 
 
-def kernel_feature_creator(data, projection_matrix, attention_dims):
+def kernel_feature_creator(data, projection_matrix, attn_axes):
     data_normalizer = 1.0 / (np.sqrt(np.sqrt(data.shape[-1])))
     ratio = 1.0 / np.sqrt(projection_matrix.shape[0])
     data_mod_shape = data.shape[0:2] + projection_matrix.shape
@@ -66,7 +66,7 @@ def kernel_feature_creator(data, projection_matrix, attention_dims):
     diag_data = np.expand_dims(diag_data, axis=data.ndim - 1)
 
     # Additional renormalization for numerical stability
-    data_renormalizer = np.max(diag_data, attention_dims, keepdims=True)
+    data_renormalizer = np.max(diag_data, attn_axes, keepdims=True)
     diag_data -= data_renormalizer
     diag_data = np.exp(diag_data)
     data_prime = data_dash * diag_data
