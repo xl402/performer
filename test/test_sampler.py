@@ -16,6 +16,7 @@ KERNEL_DATA = [((4, 1, 2, 3, 5, 8), (2, 3, 4), (100, 8), (4, 1, 2, 3, 5, 200)),
                ((3, 2, 4, 7, 8, 9), (2, 4), (1, 9), (3, 2, 4, 7, 8, 2)),
                ((1, 1, 2, 3), (2,), (10, 3), (1, 1, 2, 20))]
 
+
 @pytest.mark.parametrize('rows, columns', product([1, 10, 20], [1, 10, 20]))
 def test_gaussian_orthogonal_random_matrix_has_correct_shape(rows, columns):
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling=0)
