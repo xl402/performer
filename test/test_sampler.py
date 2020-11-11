@@ -58,6 +58,19 @@ def test_kernel_feature_creator_returns_correct_shape(kernel_data):
     assert result.shape == expected_shape
 
 
+def test_kernel_feature_creator_approximates_attention():
+    Q = np.random.uniform(size=(1, 4, 2))
+    K = np.random.uniform(size=(1, 4, 2))
+    A = np.exp(np.einsum('abc,adc->abd', Q, K) / np.sqrt(2))
+    P = GaussianOrthogonalRandomMatrix(5000, 2).get_2d_array()
+    Q_hat = kernel_feature_creator(Q, P, attn_axes=(1,))
+    K_hat = kernel_feature_creator(K, P, attn_axes=(1,))
+    A_hat = np.einsum('abc,adc->abd', Q_hat, K_hat)
+    residual = A / A_hat
+    residual -= residual.mean()
+    assert np.allclose(residual, np.zeros(residual.shape), atol=5e-3)
+
+
 @pytest.mark.parametrize('rank, expected', EINSUM_EQUATION)
 def test_get_einsum_equation(rank, expected):
     result = _get_einsum_equation(rank)
