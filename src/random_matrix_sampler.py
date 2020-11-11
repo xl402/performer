@@ -45,6 +45,11 @@ class GaussianOrthogonalRandomMatrix:
             multiplier = np.sqrt(self.columns) * np.ones(self.rows)
         return multiplier
 
+    def __repr__(self):
+        out = "GaussianOrthogonalRandomMatrix(rows={}, columns={}, scaling={})"
+        out = out.format(self.rows, self.columns, self.scaling)
+        return out
+
 
 def kernel_feature_creator(data, projection_matrix, attn_axes):
     data_normalizer = 1.0 / (np.sqrt(np.sqrt(data.shape[-1])))
