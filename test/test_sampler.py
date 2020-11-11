@@ -12,6 +12,8 @@ EINSUM_EQUATION = [(6, 'abcdef,abgf->abcdeg'),
                    (3, 'abc,abdc->abd'),
                    (7, 'abcdefg,abhg->abcdefh')]
 
+
+# data_shape, attn_axes, projection_matrix_shape, expected_shape
 KERNEL_DATA = [((4, 1, 2, 3, 5, 8), (2, 3, 4), (100, 8), (4, 1, 2, 3, 5, 200)),
                ((3, 2, 4, 7, 8, 9), (2, 4), (1, 9), (3, 2, 4, 7, 8, 2)),
                ((1, 1, 2, 3), (2,), (10, 3), (1, 1, 2, 20))]
@@ -22,6 +24,13 @@ def test_gaussian_orthogonal_random_matrix_has_correct_shape(rows, columns):
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling=0)
     out = sampler.get_2d_array()
     assert out.shape == (rows, columns)
+
+
+def test_gaussian_orthogonal_random_matix_repr_is_readable():
+    sampler = GaussianOrthogonalRandomMatrix(100, 10, scaling=1)
+    out = str(sampler)
+    expected = 'GaussianOrthogonalRandomMatrix(rows=100, columns=10, scaling=1)'
+    assert out == expected
 
 
 @pytest.mark.parametrize('shape, scaling', product([2, 4, 100], [0, 1]))
