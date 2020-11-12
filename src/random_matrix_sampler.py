@@ -26,7 +26,6 @@ class GaussianOrthogonalRandomMatrix:
             block_list.append(q)
 
         remaining_rows = self.rows - nb_full_blocks * self.columns
-
         if remaining_rows > 0:
             unstructured_block = np.random.normal(size=square_size)
             q, _ = np.linalg.qr(unstructured_block)
@@ -60,10 +59,6 @@ def kernel_feature_creator(data, projection_matrix, is_query):
     normalised_data = data_normalizer * data
     equation = _get_einsum_equation(len(data.shape))
     data_dash = np.einsum(equation, normalised_data, random_matrix)
-
-    data_dash_cos = ratio * np.cos(data_dash)
-    data_dash_sin = ratio * np.sin(data_dash)
-    data_dash = np.concatenate((data_dash_cos, data_dash_sin), axis=-1)
 
     diag_data = np.square(data)
     diag_data = np.sum(diag_data, axis=data.ndim - 1)
