@@ -72,7 +72,6 @@ def _test_kernel_feature_creator_approximates_attention():
     assert np.allclose(residual, np.zeros(residual.shape), atol=5e-3)
 
 
-
 def test_kernel_feature_creator_regression():
     with open('test/resources/regression_data.pkl', 'rb') as f:
         data = pickle.load(f)
@@ -81,7 +80,6 @@ def test_kernel_feature_creator_regression():
     key_h = kernel_feature_creator(key, projection_matrix, False)
     assert np.allclose(key_h, expected_key_h)
     assert np.allclose(query_h, expected_query_h)
-
 
 
 @pytest.mark.parametrize('rank, expected', EINSUM_EQUATION)
