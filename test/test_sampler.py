@@ -13,10 +13,10 @@ EINSUM_EQUATION = [(6, 'abcdef,abgf->abcdeg'),
                    (7, 'abcdefg,abhg->abcdefh')]
 
 
-# data_shape, attn_axes, projection_matrix_shape, expected_shape
-KERNEL_DATA = [((4, 1, 2, 3, 5, 8), (2, 3, 4), (100, 8), (4, 1, 2, 3, 5, 200)),
-               ((3, 2, 4, 7, 8, 9), (2, 4), (1, 9), (3, 2, 4, 7, 8, 2)),
-               ((1, 1, 2, 3), (2,), (10, 3), (1, 1, 2, 20))]
+# data_shape, projection_matrix_shape, expected_shape
+KERNEL_DATA = [((4, 1, 2, 3, 5, 8), (100, 8), (4, 1, 2, 3, 5, 200)),
+               ((3, 2, 4, 7, 8, 9), (1, 9), (3, 2, 4, 7, 8, 2)),
+               ((1, 1, 2, 3), (10, 3), (1, 1, 2, 20))]
 
 
 @pytest.mark.parametrize('rows, columns', product([1, 10, 20], [1, 10, 20]))
@@ -51,10 +51,10 @@ def test_gaussian_orthogonal_random_matrix_raises_on_invalid_scaling_factor():
 
 @pytest.mark.parametrize('kernel_data', KERNEL_DATA)
 def test_kernel_feature_creator_returns_correct_shape(kernel_data):
-    data_shape, attn_axes, proj_shape, expected_shape = kernel_data
+    data_shape, proj_shape, expected_shape = kernel_data
     data = np.random.uniform(size=data_shape)
     projection_matrix = np.random.uniform(size=proj_shape)
-    result = kernel_feature_creator(data, projection_matrix, attn_axes)
+    result = kernel_feature_creator(data, projection_matrix, True)
     assert result.shape == expected_shape
 
 
@@ -63,8 +63,8 @@ def test_kernel_feature_creator_approximates_attention():
     K = np.random.uniform(size=(1, 4, 2))
     A = np.exp(np.einsum('abc,adc->abd', Q, K) / np.sqrt(2))
     P = GaussianOrthogonalRandomMatrix(5000, 2).get_2d_array()
-    Q_hat = kernel_feature_creator(Q, P, attn_axes=(1,))
-    K_hat = kernel_feature_creator(K, P, attn_axes=(1,))
+    Q_hat = kernel_feature_creator(Q, P, is_query=True)
+    K_hat = kernel_feature_creator(K, P, is_query=False)
     A_hat = np.einsum('abc,adc->abd', Q_hat, K_hat)
     residual = A / A_hat
     residual -= residual.mean()

@@ -51,7 +51,7 @@ class GaussianOrthogonalRandomMatrix:
         return out
 
 
-def kernel_feature_creator(data, projection_matrix, attn_axes):
+def kernel_feature_creator(data, projection_matrix, is_query):
     data_normalizer = 1.0 / (np.sqrt(np.sqrt(data.shape[-1])))
     ratio = 1.0 / np.sqrt(projection_matrix.shape[0])
     data_mod_shape = data.shape[0:2] + projection_matrix.shape
@@ -60,22 +60,24 @@ def kernel_feature_creator(data, projection_matrix, attn_axes):
     normalised_data = data_normalizer * data
     equation = _get_einsum_equation(len(data.shape))
     data_dash = np.einsum(equation, normalised_data, random_matrix)
+
     data_dash_cos = ratio * np.cos(data_dash)
     data_dash_sin = ratio * np.sin(data_dash)
     data_dash = np.concatenate((data_dash_cos, data_dash_sin), axis=-1)
 
-    # Constructing D_data and data^{'}
     diag_data = np.square(data)
     diag_data = np.sum(diag_data, axis=data.ndim - 1)
     diag_data = (diag_data / 2.0) * data_normalizer * data_normalizer
     diag_data = np.expand_dims(diag_data, axis=data.ndim - 1)
 
-    # Additional renormalization for numerical stability
-    data_renormalizer = np.max(diag_data, attn_axes, keepdims=True)
-    diag_data -= data_renormalizer
-    diag_data = np.exp(diag_data)
-    data_prime = data_dash * diag_data
-    return data_prime
+    if is_query:
+        last_dims_t = (len(data_dash.shape) - 1,)
+        data_dash = ratio * (
+                  np.exp(data_dash - diag_data -
+                  np.max(data_dash, axis=last_dims_t, keepdims=True)) + 1e-4)
+    else:
+        data_dash = ratio * (np.exp(data_dash - diag_data - np.max(data_dash)) + 1e-4)
+    return data_dash
 
 
 def _get_einsum_equation(rank):
