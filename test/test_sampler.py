@@ -60,16 +60,14 @@ def test_kernel_feature_creator_returns_correct_shape(kernel_data):
 
 
 def _test_kernel_feature_creator_approximates_attention():
-    Q = np.random.uniform(size=(1, 4, 2))
-    K = np.random.uniform(size=(1, 4, 2))
-    A = np.exp(np.einsum('abc,adc->abd', Q, K) / np.sqrt(2))
-    P = GaussianOrthogonalRandomMatrix(5000, 2).get_2d_array()
+    Q = np.random.uniform(size=(1, 2, 3, 4))
+    K = np.random.uniform(size=(1, 2, 3, 4))
+    P = GaussianOrthogonalRandomMatrix(10000, 4).get_2d_array()
     Q_hat = kernel_feature_creator(Q, P, is_query=True)
     K_hat = kernel_feature_creator(K, P, is_query=False)
-    A_hat = np.einsum('abc,adc->abd', Q_hat, K_hat)
-    residual = A / A_hat
-    residual -= residual.mean()
-    assert np.allclose(residual, np.zeros(residual.shape), atol=5e-3)
+    A = attn1(Q, K)
+    A_hat = attn1(Q_hat, K_hat)
+    assert np.allclose(A, A_hat, atol=1e-3)
 
 
 def test_kernel_feature_creator_regression():
@@ -86,3 +84,24 @@ def test_kernel_feature_creator_regression():
 def test_get_einsum_equation(rank, expected):
     result = _get_einsum_equation(rank)
     assert result == expected
+
+
+def attn1(Q, K):
+    QK = np.einsum("abcd,abed->abce", Q, K)
+    A = np.exp(QK / np.sqrt(Q.shape[-1]))
+    shape = A.shape
+    ones = np.ones(shape=shape[:-1])
+    D = np.einsum("abce,abc->abc", A, ones)
+    D = 1 / D
+    DA = np.einsum("abc,abce->abce", D, A)
+    return DA
+
+
+def attn2(Q, K):
+    A = np.einsum("abcd,abed->abce", Q, K)
+    shape = A.shape
+    ones = np.ones(shape=shape[:-1])
+    D = np.einsum("abce,abc->abc", A, ones)
+    D = 1 / D
+    DA = np.einsum("abc,abce->abce", D, A)
+    return DA
