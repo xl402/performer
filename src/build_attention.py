@@ -13,7 +13,6 @@ def build_quadratic_attention_equation(rank, attn_axes):
     # Target = Query/Output
     # Slight issue that the attention is not interpretable as A^{tilde} cannot be interpreted as attention
 
-    #import pdb; pdb.set_trace()
     # what the final output should be
     target_notation = _CHR_IDX[:rank]
     # tuple of batch dimensions (ALL) - attn_axes, penultimate (heads dim)
@@ -39,9 +38,7 @@ def build_quadratic_attention_equation(rank, attn_axes):
 
 
 def build_linear_attention_equation(rank, attn_axes):
-    # raise(NotImplementedError)
     target_notation = _CHR_IDX[:rank]
-    # tuple of batch dimensions (ALL) - attn_axes, penultimate (heads dim)
     batch_dims = tuple(np.delete(range(rank), attn_axes + (rank - 1,)))
     letter_offset = rank
 
