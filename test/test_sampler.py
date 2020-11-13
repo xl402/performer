@@ -38,10 +38,10 @@ def test_gaussian_orthogonal_random_matix_repr_is_readable():
 def test_gaussian_orthogonal_random_matrix_off_diags_are_zeros(shape, scaling):
     rows, columns, scaling = shape, shape, scaling
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling)
-    out = sampler.get_2d_array()
+    out = sampler.get_2d_array().numpy()
     out = out @ out.T
     out = out - np.diag(np.diag(out))
-    assert np.allclose(out, np.zeros(out.shape))
+    assert np.allclose(out, np.zeros(out.shape), atol=1e-4)
 
 
 def test_gaussian_orthogonal_random_matrix_raises_on_invalid_scaling_factor():
@@ -53,15 +53,15 @@ def test_gaussian_orthogonal_random_matrix_raises_on_invalid_scaling_factor():
 @pytest.mark.parametrize('kernel_data', KERNEL_DATA)
 def test_kernel_feature_creator_returns_correct_shape(kernel_data):
     data_shape, proj_shape, expected_shape = kernel_data
-    data = np.random.uniform(size=data_shape)
-    projection_matrix = np.random.uniform(size=proj_shape)
+    data = tf.random.uniform(shape=data_shape)
+    projection_matrix = tf.random.uniform(shape=proj_shape)
     result = kernel_feature_creator(data, projection_matrix, True)
     assert result.shape == expected_shape
 
 
 def test_kernel_feature_creator_approximates_attention():
-    Q = np.random.uniform(size=(1, 2, 3, 4))
-    K = np.random.uniform(size=(1, 2, 3, 4))
+    Q = tf.random.uniform(shape=(1, 2, 3, 4))
+    K = tf.random.uniform(shape=(1, 2, 3, 4))
     P = GaussianOrthogonalRandomMatrix(1000, 4).get_2d_array()
     Q_hat = kernel_feature_creator(Q, P, is_query=True)
     K_hat = kernel_feature_creator(K, P, is_query=False)

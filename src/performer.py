@@ -9,6 +9,7 @@ from tensorflow.python.ops import special_math_ops
 import tensorflow as tf
 
 from random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
+from random_matrix_sampler import kernel_feature_creator
 from build_attention import build_linear_attention_equation
 from build_attention import build_quadratic_attention_equation
 
@@ -18,14 +19,16 @@ logging.basicConfig(level=logging.DEBUG)
 
 class Performer(MultiHeadAttention):
     def __init__(self, *args, **kwargs):
-        attention_method = kwargs.pop('attention_method', 'quadratic')
-        assert attention_method in ['linear', 'quadratic'], 'invalid attention method'
-        if attention_method == 'quadratic':
-            self.scaling = kwargs.pop('scaling', 0)
-            self.supports = kwargs.pop('supports', 100)
+        self.attention_method = kwargs.pop('attention_method', 'quadratic')
+        message = 'invalid attention method'
+        assert self.attention_method in ['linear', 'quadratic'], message
+        if self.attention_method == 'quadratic':
             self._compute_attention = self.quadratic_attention
             self._build_attention_equation = build_quadratic_attention_equation
         else:
+            self.scaling = kwargs.pop('scaling', 1)
+            self.supports = kwargs.pop('supports', 100)
+            self.sampler = GOR(kwargs['num_heads'], self.supports, self.scaling)
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
 
@@ -60,7 +63,7 @@ class Performer(MultiHeadAttention):
         return attention_output, attention_scores
 
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
-        raise(NotImplementedError)
+        raise(NotImplementedError('Linear attention is not yet done'))
 
 
 if __name__ == '__main__':
