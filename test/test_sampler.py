@@ -59,15 +59,15 @@ def test_kernel_feature_creator_returns_correct_shape(kernel_data):
     assert result.shape == expected_shape
 
 
-def _test_kernel_feature_creator_approximates_attention():
+def test_kernel_feature_creator_approximates_attention():
     Q = np.random.uniform(size=(1, 2, 3, 4))
     K = np.random.uniform(size=(1, 2, 3, 4))
-    P = GaussianOrthogonalRandomMatrix(10000, 4).get_2d_array()
+    P = GaussianOrthogonalRandomMatrix(1000, 4).get_2d_array()
     Q_hat = kernel_feature_creator(Q, P, is_query=True)
     K_hat = kernel_feature_creator(K, P, is_query=False)
-    A = attn1(Q, K)
-    A_hat = attn1(Q_hat, K_hat)
-    assert np.allclose(A, A_hat, atol=1e-3)
+    A = _attention(Q, K, 'nonlinear')
+    A_hat = _attention(Q_hat, K_hat, 'linear')
+    assert np.allclose(A, A_hat, atol=0.1)
 
 
 def test_kernel_feature_creator_regression():
@@ -86,19 +86,10 @@ def test_get_einsum_equation(rank, expected):
     assert result == expected
 
 
-def attn1(Q, K):
-    QK = np.einsum("abcd,abed->abce", Q, K)
-    A = np.exp(QK / np.sqrt(Q.shape[-1]))
-    shape = A.shape
-    ones = np.ones(shape=shape[:-1])
-    D = np.einsum("abce,abc->abc", A, ones)
-    D = 1 / D
-    DA = np.einsum("abc,abce->abce", D, A)
-    return DA
-
-
-def attn2(Q, K):
+def _attention(Q, K, method='linear'):
     A = np.einsum("abcd,abed->abce", Q, K)
+    if method == 'nonlinear':
+        A = np.exp(A / np.sqrt(Q.shape[-1]))
     shape = A.shape
     ones = np.ones(shape=shape[:-1])
     D = np.einsum("abce,abc->abc", A, ones)
