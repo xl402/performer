@@ -68,28 +68,25 @@ class Performer(MultiHeadAttention):
 
         kv = einsum(self._dot_product_equation, lifted_key, value)
         qkv = einsum(self._combine_equation, lifted_query, kv)
-        ones = tf.ones(shape=lifted_key.shape[:-1])
+        shape = tf.compat.v1.placeholder(tf.float32, shape=lifted_key.shape[:-1])
+        ones = tf.ones_like(shape)
 
         eq1, eq2, eq3 = self._normalisation_equations
         k_ones = einsum(eq1, lifted_key, ones)
         D = einsum(eq2, lifted_query, k_ones)
-        D = 1 / (D + tf.constant(1e-6, shape=D.shape))
+        D = 1 / (D + 1e-6)
         out = einsum(eq3, D, qkv)
         return out, None
 
 
 if __name__ == '__main__':
-    import numpy as np
     initializer = tf.keras.initializers.RandomNormal(seed=0)
     layer = Performer(num_heads=2, key_dim=20, attention_method='quadratic',
                       kernel_initializer=initializer, bias_initializer='zeros')
     linear_layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=1000,
                       kernel_initializer=initializer, bias_initializer='zeros')
 
-    query = tf.random.uniform(shape=[1, 4, 3])
-    key = tf.random.uniform(shape=[1, 5, 3])
-    value = tf.random.uniform(shape=[1, 5, 3])
+    query = tf.keras.layers.Input(shape=[4, 3])
 
-    exact = layer(query, value, key)
-    approx = linear_layer(query, value, key)
-    assert np.allclose(exact, approx, atol=1e-3)
+    exact = layer(query, query)
+    approx = linear_layer(query, query)
