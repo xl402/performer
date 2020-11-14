@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from performer import Performer
+from networks.model import Performer
 
 INPUT_SHAPES = [([1, 18, 16], [1, 4, 12], [1, 4, 12], (1,)),
                 ([1, 5, 3, 16], [1, 5, 4, 16], [1, 5, 4, 12], (1, 2)),

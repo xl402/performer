@@ -7,11 +7,11 @@ from tensorflow.python.keras.layers import core
 from tensorflow import multiply, einsum
 import tensorflow as tf
 
-from random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
-from random_matrix_sampler import kernel_feature_creator
-from build_attention import build_linear_attention_equation
-from build_attention import build_quadratic_attention_equation
-from build_attention import build_normalisation_equation
+from networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
+from networks.random_matrix_sampler import kernel_feature_creator
+from networks.build_attention import build_linear_attention_equation
+from networks.build_attention import build_quadratic_attention_equation
+from networks.build_attention import build_normalisation_equation
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)

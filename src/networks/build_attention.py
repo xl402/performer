@@ -78,3 +78,11 @@ def build_normalisation_equation(rank, attn_axes):
     eq2 = f"{source},{target}->{source[:-1]}"
     eq3 = f"{source[:-1]},{source}->{source}"
     return eq1, eq2, eq3
+
+
+def build_kernel_equation(rank):
+    strings = _CHR_IDX[:rank+1]
+    source1 = strings[:-1]
+    source2 = strings[:2] + strings[-1] + strings[-2]
+    combine_equation = f"{source1},{source2}->{source1[:-1]+strings[-1]}"
+    return combine_equation

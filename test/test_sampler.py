@@ -5,13 +5,8 @@ import pickle
 import pytest
 import tensorflow as tf
 
-from random_matrix_sampler import GaussianOrthogonalRandomMatrix
-from random_matrix_sampler import kernel_feature_creator, _get_einsum_equation
-
-
-EINSUM_EQUATION = [(6, 'abcdef,abgf->abcdeg'),
-                   (3, 'abc,abdc->abd'),
-                   (7, 'abcdefg,abhg->abcdefh')]
+from networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix
+from networks.random_matrix_sampler import kernel_feature_creator
 
 
 # data_shape, projection_matrix_shape, expected_shape
@@ -78,12 +73,6 @@ def test_kernel_feature_creator_regression():
     key_h = kernel_feature_creator(key, projection_matrix, False)
     assert np.allclose(key_h, expected_key_h)
     assert np.allclose(query_h, expected_query_h)
-
-
-@pytest.mark.parametrize('rank, expected', EINSUM_EQUATION)
-def test_get_einsum_equation(rank, expected):
-    result = _get_einsum_equation(rank)
-    assert result == expected
 
 
 def _attention(Q, K, method='linear'):

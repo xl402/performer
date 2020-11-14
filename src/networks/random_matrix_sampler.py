@@ -3,6 +3,8 @@ import string
 import numpy as np
 import tensorflow as tf
 
+from networks.build_attention import build_kernel_equation
+
 
 _CHR_IDX = string.ascii_lowercase
 
@@ -62,7 +64,7 @@ def kernel_feature_creator(data, projection_matrix, is_query):
     random_matrix = tf.zeros(data_mod_shape) + projection_matrix
 
     normalised_data = data_normalizer * data
-    equation = _get_einsum_equation(len(data.shape))
+    equation = build_kernel_equation(len(data.shape))
     data_dash = tf.einsum(equation, normalised_data, random_matrix)
 
     diag_data = tf.math.square(data)
@@ -78,11 +80,3 @@ def kernel_feature_creator(data, projection_matrix, is_query):
     else:
         data_dash = ratio * (tf.math.exp(data_dash - diag_data - tf.math.reduce_max(data_dash)) + 1e-4)
     return data_dash
-
-
-def _get_einsum_equation(rank):
-    strings = _CHR_IDX[:rank+1]
-    source1 = strings[:-1]
-    source2 = strings[:2] + strings[-1] + strings[-2]
-    combine_equation = f"{source1},{source2}->{source1[:-1]+strings[-1]}"
-    return combine_equation
