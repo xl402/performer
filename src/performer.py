@@ -66,14 +66,22 @@ class Performer(MultiHeadAttention):
         random_features = self.sampler.get_2d_array()
         lifted_query = kernel_feature_creator(query, random_features, True)
         lifted_key = kernel_feature_creator(key, random_features, False)
+
         kv = einsum(self._dot_product_equation, lifted_key, value)
         qkv = einsum(self._combine_equation, lifted_query, kv)
-        ones = tf.ones(shape=(1, 5, 2))
-        k_ones = einsum("abcd,abc->acd", lifted_key, ones)
+        ones = tf.ones(shape=lifted_key.shape[:-1])
 
-        d = einsum("abcd,acd->abc", lifted_query, k_ones)
-        d = 1 / d
-        out = einsum("abc,abcd->abcd", d, qkv)
+        import string
+        import numpy as np
+        _CHR_IDX = string.ascii_lowercase
+        source = _CHR_IDX[:len(lifted_query.shape)]
+        target = "".join(np.delete(list(source), self._attention_axes, 0))
+        eq1 = f"{source},{source[:-1]}->{target}"
+        print(eq1)
+        k_ones = einsum(eq1, lifted_key, ones)
+        D = einsum(f"{source},{target}->{source[:-1]}", lifted_query, k_ones)
+        D = 1 / (D + tf.constant(1e-6, shape=D.shape))
+        out = einsum("abc,abcd->abcd", D, qkv)
         return out, None
 
 

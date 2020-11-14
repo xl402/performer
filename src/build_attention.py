@@ -68,3 +68,12 @@ def build_linear_attention_equation(rank, attn_axes):
     q_kv_product_equation = "%s,%s->%s" % (q_notation, k_v_notation,
                                            target_notation)
     return k_v_product_equation, q_kv_product_equation, attn_scores_rank
+
+
+def build_normalisation_equation(rank, attn_axes):
+    _CHR_IDX = string.ascii_lowercase
+    source = _CHR_IDX[:rank]
+    target = "".join(np.delete(list(source), attn_axes, 0))
+    eq1 = f"{source},{source[:-1]}->{target}"
+    eq2 = f"{source},{target}->{source[:-1]}"
+    return eq1, eq2
