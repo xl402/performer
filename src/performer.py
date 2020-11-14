@@ -28,7 +28,7 @@ class Performer(MultiHeadAttention):
         else:
             self.scaling = kwargs.pop('scaling', 1)
             self.supports = kwargs.pop('supports', 100)
-            self.sampler = GOR(kwargs['key_dim'], self.supports, self.scaling)
+            self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
 
@@ -64,7 +64,6 @@ class Performer(MultiHeadAttention):
 
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
         random_features = self.sampler.get_2d_array()
-        import pdb; pdb.set_trace()
         query_h = kernel_feature_creator(query, random_features, True)
         key_h = kernel_feature_creator(key, random_features, False)
         kv = special_math_ops.einsum(self._dot_product_equation, key_h, value)
