@@ -4,8 +4,7 @@ import logging
 from tensorflow.keras.layers import MultiHeadAttention
 from tensorflow.python.keras.layers import advanced_activations
 from tensorflow.python.keras.layers import core
-from tensorflow.python.ops import math_ops
-from tensorflow.python.ops import special_math_ops
+from tensorflow import multiply, einsum
 import tensorflow as tf
 
 from random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
@@ -49,30 +48,47 @@ class Performer(MultiHeadAttention):
         logger.debug(f"\ndot product equation: {self._dot_product_equation}")
         logger.debug(f"\ncombine equation: {self._combine_equation}")
 
-        query = math_ops.multiply(query, 1.0 / math.sqrt(float(self._key_dim)))
+        query = multiply(query, 1.0 / math.sqrt(float(self._key_dim)))
 
-        attention_scores = special_math_ops.einsum(self._dot_product_equation, key, query)
+        attention_scores = einsum(self._dot_product_equation, key, query)
         attention_scores = self._masked_softmax(attention_scores, attention_mask)
 
         attention_scores_dropout = self._dropout_layer(
             attention_scores, training=training)
 
-        attention_output = special_math_ops.einsum(self._combine_equation, attention_scores_dropout, value)
+        attention_output = einsum(self._combine_equation, attention_scores_dropout, value)
         return attention_output, attention_scores
 
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
+        logger.debug(f"\ndot product equation: {self._dot_product_equation}")
+        logger.debug(f"\ncombine equation: {self._combine_equation}")
+
         random_features = self.sampler.get_2d_array()
-        query_h = kernel_feature_creator(query, random_features, True)
-        key_h = kernel_feature_creator(key, random_features, False)
-        kv = special_math_ops.einsum(self._dot_product_equation, key_h, value)
-        qkv = special_math_ops.einsum(self._combine_equation, query_h, kv)
-        return qkv, None
+        lifted_query = kernel_feature_creator(query, random_features, True)
+        lifted_key = kernel_feature_creator(key, random_features, False)
+        kv = einsum(self._dot_product_equation, lifted_key, value)
+        qkv = einsum(self._combine_equation, lifted_query, kv)
+        ones = tf.ones(shape=(1, 5, 2))
+        k_ones = einsum("abcd,abc->acd", lifted_key, ones)
+
+        d = einsum("abcd,acd->abc", lifted_query, k_ones)
+        d = 1 / d
+        out = einsum("abc,abcd->abcd", d, qkv)
+        return out, None
 
 
 if __name__ == '__main__':
-    layer = Performer(num_heads=1, key_dim=2, attention_method='quadratic')
-    query = tf.random.uniform(shape=[1, 4, 3])
-    exact = layer(query, query)
+    initializer = tf.keras.initializers.RandomNormal(seed=0)
+    layer = Performer(num_heads=2, key_dim=20, attention_method='quadratic',
+                      kernel_initializer=initializer, bias_initializer='zeros')
+    linear_layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=1000,
+                      kernel_initializer=initializer, bias_initializer='zeros')
 
-    linear_layer = Performer(num_heads=1, key_dim=2, attention_method='linear')
-    approx = linear_layer(query, query)
+    query = tf.random.uniform(shape=[1, 4, 3])
+    key = tf.random.uniform(shape=[1, 5, 3])
+    value = tf.random.uniform(shape=[1, 5, 3])
+
+    exact = layer(query, value, key)
+    approx = linear_layer(query, value, key)
+    import numpy as np
+    assert np.allclose(exact, approx, atol=1e-3)
