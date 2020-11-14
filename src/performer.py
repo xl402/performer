@@ -11,6 +11,7 @@ from random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
 from random_matrix_sampler import kernel_feature_creator
 from build_attention import build_linear_attention_equation
 from build_attention import build_quadratic_attention_equation
+from build_attention import build_normalisation_equation
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -71,17 +72,14 @@ class Performer(MultiHeadAttention):
         qkv = einsum(self._combine_equation, lifted_query, kv)
         ones = tf.ones(shape=lifted_key.shape[:-1])
 
-        import string
-        import numpy as np
-        _CHR_IDX = string.ascii_lowercase
-        source = _CHR_IDX[:len(lifted_query.shape)]
-        target = "".join(np.delete(list(source), self._attention_axes, 0))
-        eq1 = f"{source},{source[:-1]}->{target}"
-        print(eq1)
+        eq1, eq2, eq3 = build_normalisation_equation(len(lifted_query.shape), self._attention_axes)
+        logger.debug(eq1)
+        logger.debug(eq2)
+        logger.debug(eq3)
         k_ones = einsum(eq1, lifted_key, ones)
-        D = einsum(f"{source},{target}->{source[:-1]}", lifted_query, k_ones)
+        D = einsum(eq2, lifted_query, k_ones)
         D = 1 / (D + tf.constant(1e-6, shape=D.shape))
-        out = einsum("abc,abcd->abcd", D, qkv)
+        out = einsum(eq3, D, qkv)
         return out, None
 
 

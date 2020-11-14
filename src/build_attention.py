@@ -76,4 +76,5 @@ def build_normalisation_equation(rank, attn_axes):
     target = "".join(np.delete(list(source), attn_axes, 0))
     eq1 = f"{source},{source[:-1]}->{target}"
     eq2 = f"{source},{target}->{source[:-1]}"
-    return eq1, eq2
+    eq3 = f"{source[:-1]},{source}->{source}"
+    return eq1, eq2, eq3
