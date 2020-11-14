@@ -43,3 +43,23 @@ def test_performer_linear_attention_approximates_quadratic_attention(inputs, num
     approx_output = approx_layer(query, value, key)
     exact_output = exact_layer(query, value, key)
     assert np.allclose(approx_output, exact_output, atol=1e-3)
+
+
+@pytest.mark.parametrize('attn_method', ATTN_METHODS)
+def test_performer_is_compatible_with_keras_input_layer(attn_method):
+    layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method)
+    query = tf.keras.layers.Input(shape=[4, 3])
+    out = layer(query, query)
+    np.testing.assert_array_equal(out.shape, [None, 4, 3])
+
+
+@pytest.mark.parametrize('attn_method', ATTN_METHODS)
+def test_performer_compiles_and_trains(attn_method):
+    layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method)
+    x = tf.random.uniform(shape=(2, 4, 3))
+    y = tf.random.uniform(shape=(2, 4, 3))
+    inputs = tf.keras.layers.Input(shape=[4, 3])
+    outputs = layer(inputs, inputs)
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    model.compile("adam", "mean_squared_error")
+    model.fit(x, y, epochs=1)
