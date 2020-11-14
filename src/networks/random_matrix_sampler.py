@@ -37,7 +37,9 @@ class GaussianOrthogonalRandomMatrix:
         final_matrix = tf.concat(block_list, axis=0)
 
         multiplier = self._get_multiplier()
-        return tf.matmul(tf.linalg.diag(multiplier), final_matrix)
+        out = tf.matmul(tf.linalg.diag(multiplier), final_matrix)
+        tf.stop_gradient(out)
+        return out
 
     def _get_multiplier(self):
         if self.scaling == 0:
