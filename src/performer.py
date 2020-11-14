@@ -27,10 +27,11 @@ class Performer(MultiHeadAttention):
             self._build_attention_equation = build_quadratic_attention_equation
         else:
             self.scaling = kwargs.pop('scaling', 1)
-            self.supports = kwargs.pop('supports', 100)
+            self.supports = kwargs.pop('supports', 200)
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
+            self._build_normalisation_equation = build_normalisation_equation
 
         super().__init__(*args, **kwargs)
 
@@ -44,11 +45,11 @@ class Performer(MultiHeadAttention):
         norm_axes = tuple(range(attn_scores_rank - len(self._attention_axes), attn_scores_rank))
         self._softmax = advanced_activations.Softmax(axis=norm_axes)
         self._dropout_layer = core.Dropout(rate=self._dropout)
+        if hasattr(self, '_build_normalisation_equation'):
+            self._normalisation_equations = self._build_normalisation_equation(rank, self._attention_axes)
+
 
     def quadratic_attention(self, query, key, value, attention_mask=None, training=None):
-        logger.debug(f"\ndot product equation: {self._dot_product_equation}")
-        logger.debug(f"\ncombine equation: {self._combine_equation}")
-
         query = multiply(query, 1.0 / math.sqrt(float(self._key_dim)))
 
         attention_scores = einsum(self._dot_product_equation, key, query)
@@ -61,9 +62,6 @@ class Performer(MultiHeadAttention):
         return attention_output, attention_scores
 
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
-        logger.debug(f"\ndot product equation: {self._dot_product_equation}")
-        logger.debug(f"\ncombine equation: {self._combine_equation}")
-
         random_features = self.sampler.get_2d_array()
         lifted_query = kernel_feature_creator(query, random_features, True)
         lifted_key = kernel_feature_creator(key, random_features, False)
@@ -72,10 +70,7 @@ class Performer(MultiHeadAttention):
         qkv = einsum(self._combine_equation, lifted_query, kv)
         ones = tf.ones(shape=lifted_key.shape[:-1])
 
-        eq1, eq2, eq3 = build_normalisation_equation(len(lifted_query.shape), self._attention_axes)
-        logger.debug(eq1)
-        logger.debug(eq2)
-        logger.debug(eq3)
+        eq1, eq2, eq3 = self._normalisation_equations
         k_ones = einsum(eq1, lifted_key, ones)
         D = einsum(eq2, lifted_query, k_ones)
         D = 1 / (D + tf.constant(1e-6, shape=D.shape))
@@ -84,6 +79,7 @@ class Performer(MultiHeadAttention):
 
 
 if __name__ == '__main__':
+    import numpy as np
     initializer = tf.keras.initializers.RandomNormal(seed=0)
     layer = Performer(num_heads=2, key_dim=20, attention_method='quadratic',
                       kernel_initializer=initializer, bias_initializer='zeros')
@@ -96,5 +92,4 @@ if __name__ == '__main__':
 
     exact = layer(query, value, key)
     approx = linear_layer(query, value, key)
-    import numpy as np
     assert np.allclose(exact, approx, atol=1e-3)

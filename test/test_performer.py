@@ -26,10 +26,12 @@ def test_performer_output_is_same_shape_as_query(inputs, attn_method):
 
 
 @pytest.mark.parametrize('inputs', INPUT_SHAPES)
-def _test_performer_linear_attention_approximates_quadratic_attention(inputs):
+def test_performer_linear_attention_approximates_quadratic_attention(inputs):
     q_shape, k_shape, v_shape, attn_axis = inputs
-    kwargs = {'num_heads': 3, 'key_dim': 2, 'attention_axes': attn_axis}
-    approx_layer = Performer(attention_method='linear', **kwargs)
+    initializer = tf.keras.initializers.RandomNormal(seed=0)
+    kwargs = {'num_heads': 3, 'key_dim': 2, 'attention_axes': attn_axis,
+              'kernel_initializer': initializer, 'bias_initializer': 'zeros'}
+    approx_layer = Performer(attention_method='linear', supports=1000, **kwargs)
     exact_layer = Performer(attention_method='quadratic', **kwargs)
 
     query = tf.random.uniform(shape=q_shape, dtype='float32')
@@ -38,4 +40,4 @@ def _test_performer_linear_attention_approximates_quadratic_attention(inputs):
 
     approx_output = approx_layer(query, value, key)
     exact_output = exact_layer(query, value, key)
-    assert np.allclose(approx_output, exact_output)
+    assert np.allclose(approx_output, exact_output, atol=1e-3)
