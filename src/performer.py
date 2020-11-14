@@ -45,8 +45,7 @@ class Performer(MultiHeadAttention):
         self._softmax = advanced_activations.Softmax(axis=norm_axes)
         self._dropout_layer = core.Dropout(rate=self._dropout)
 
-    def quadratic_attention(self, query, key, value,
-                           attention_mask=None, training=None):
+    def quadratic_attention(self, query, key, value, attention_mask=None, training=None):
         logger.debug(f"\ndot product equation: {self._dot_product_equation}")
         logger.debug(f"\ncombine equation: {self._combine_equation}")
 
@@ -59,7 +58,6 @@ class Performer(MultiHeadAttention):
             attention_scores, training=training)
 
         attention_output = special_math_ops.einsum(self._combine_equation, attention_scores_dropout, value)
-
         return attention_output, attention_scores
 
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
@@ -72,8 +70,9 @@ class Performer(MultiHeadAttention):
 
 
 if __name__ == '__main__':
-    layer = Performer(num_heads=2, key_dim=2, attention_method='quadratic')
-    query = tf.keras.Input(shape=[18, 16])
-    key = tf.keras.Input(shape=[4, 16])
-    value = tf.keras.Input(shape=[4, 3])
-    output_tensor, weights = layer(query, key, value, return_attention_scores=True)
+    layer = Performer(num_heads=1, key_dim=2, attention_method='quadratic')
+    query = tf.random.uniform(shape=[1, 4, 3])
+    exact = layer(query, query)
+
+    linear_layer = Performer(num_heads=1, key_dim=2, attention_method='linear')
+    approx = linear_layer(query, query)
