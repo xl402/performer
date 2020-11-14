@@ -10,6 +10,8 @@ INPUT_SHAPES = [([1, 18, 16], [1, 4, 12], [1, 4, 12], (1,)),
                 ([1, 5, 3, 16], [1, 5, 4, 16], [1, 5, 4, 12], (1, 2)),
                 ([1, 5, 3, 10], [1, 5, 4, 10], [1, 5, 4, 2], (2, ))]
 ATTN_METHODS = ['linear', 'quadratic']
+NUM_HEADS = [1, 3, 5]
+KEY_DIMS = [1, 5]
 
 
 @pytest.mark.parametrize('inputs, attn_method', product(INPUT_SHAPES, ATTN_METHODS))
@@ -25,11 +27,11 @@ def test_performer_output_is_same_shape_as_query(inputs, attn_method):
     assert all(np.array(output_tensor.shape) == q_shape)
 
 
-@pytest.mark.parametrize('inputs', INPUT_SHAPES)
-def test_performer_linear_attention_approximates_quadratic_attention(inputs):
+@pytest.mark.parametrize('inputs, num_heads, key_dim', product(INPUT_SHAPES, NUM_HEADS, KEY_DIMS))
+def test_performer_linear_attention_approximates_quadratic_attention(inputs, num_heads, key_dim):
     q_shape, k_shape, v_shape, attn_axis = inputs
     initializer = tf.keras.initializers.RandomNormal(seed=0)
-    kwargs = {'num_heads': 3, 'key_dim': 2, 'attention_axes': attn_axis,
+    kwargs = {'num_heads': num_heads, 'key_dim': key_dim, 'attention_axes': attn_axis,
               'kernel_initializer': initializer, 'bias_initializer': 'zeros'}
     approx_layer = Performer(attention_method='linear', supports=1000, **kwargs)
     exact_layer = Performer(attention_method='quadratic', **kwargs)
