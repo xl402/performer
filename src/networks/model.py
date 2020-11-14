@@ -68,8 +68,7 @@ class Performer(MultiHeadAttention):
 
         kv = einsum(self._dot_product_equation, lifted_key, value)
         qkv = einsum(self._combine_equation, lifted_query, kv)
-        shape = tf.compat.v1.placeholder(tf.float32, shape=lifted_key.shape[:-1])
-        ones = tf.ones_like(shape)
+        ones = tf.ones_like(lifted_key[..., 0])
 
         eq1, eq2, eq3 = self._normalisation_equations
         k_ones = einsum(eq1, lifted_key, ones)
