@@ -18,23 +18,10 @@ class GaussianOrthogonalRandomMatrix:
         assert self.scaling in [0, 1], 'Scaling must be one of {0, 1}'
 
     def get_2d_array(self):
-        nb_full_blocks = int(self.rows / self.columns)
-        block_list = []
-
-        square_size = (self.columns, self.columns)
-        for _ in range(nb_full_blocks):
-            unstructured_block = tf.random.normal(shape=square_size)
-            q, _ = tf.linalg.qr(unstructured_block)
-            q = tf.transpose(q)
-            block_list.append(q)
-
-        remaining_rows = self.rows - nb_full_blocks * self.columns
-        if remaining_rows > 0:
-            unstructured_block = tf.random.normal(shape=square_size)
-            q, _ = tf.linalg.qr(unstructured_block)
-            q = tf.transpose(q)
-            block_list.append(q[:remaining_rows])
-        final_matrix = tf.concat(block_list, axis=0)
+        shape = (self.rows, self.columns)
+        unstructured_block = tf.random.normal(shape=shape)
+        q, r = tf.linalg.qr(unstructured_block)
+        final_matrix = q if self.rows >= self.columns else r
 
         multiplier = self._get_multiplier()
         out = tf.matmul(tf.linalg.diag(multiplier), final_matrix)
