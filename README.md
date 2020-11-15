@@ -1,9 +1,12 @@
-<img src="https://imgur.com/anaqXSD.png" width="600px"></img>
-
 # Tensorflow Implementation of Performer
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/xl402/performer/performer)
 
+
 An implementation of <a href="https://arxiv.org/abs/2009.14794">Performer</a>, a linear attention-based transformer variant with a **F**ast **A**ttention **V**ia positive **O**rthogonal **R**andom features approach (FAVOR+).
+
+
+<img src="https://imgur.com/anaqXSD.png" width="500px"></img>
+
 
 ### Initial Setup
 #### Install dependencies
