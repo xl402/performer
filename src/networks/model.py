@@ -21,13 +21,15 @@ class Performer(MultiHeadAttention):
     def __init__(self, *args, **kwargs):
         self.attention_method = kwargs.pop('attention_method', 'quadratic')
         message = 'invalid attention method'
+        self.scaling = kwargs.pop('scaling', 1)
+        self.supports = kwargs.pop('supports', None)
         assert self.attention_method in ['linear', 'quadratic'], message
         if self.attention_method == 'quadratic':
             self._compute_attention = self.quadratic_attention
             self._build_attention_equation = build_quadratic_attention_equation
         else:
-            self.scaling = kwargs.pop('scaling', 1)
-            self.supports = kwargs.pop('supports', 200)
+            if self.supports is None:
+                raise(RuntimeError('must have numbers of supports specified'))
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
@@ -40,52 +42,48 @@ class Performer(MultiHeadAttention):
             self._attention_axes = tuple(range(1, rank - 2))
         else:
             self._attention_axes = tuple(self._attention_axes)
-        self._dot_product_equation, self._combine_equation, attn_scores_rank = (
-             self._build_attention_equation(rank, attn_axes=self._attention_axes))
-        norm_axes = tuple(range(attn_scores_rank - len(self._attention_axes), attn_scores_rank))
-        self._softmax = advanced_activations.Softmax(axis=norm_axes)
-        self._dropout_layer = core.Dropout(rate=self._dropout)
+        self._add_attention_equation(rank)
+        self._add_soft_max_and_dropout_layers()
         if hasattr(self, '_build_normalisation_equation'):
-            self._normalisation_equations = self._build_normalisation_equation(rank, self._attention_axes)
+            self._add_normalisation_equation(rank)
 
+    def _add_attention_equation(self, rank):
+        result = self._build_attention_equation(rank, self._attention_axes)
+        self._dot_product_equation, self._combine_equation, attn_scores_rank = result
+        norm_axes = tuple(range(attn_scores_rank - len(self._attention_axes), attn_scores_rank))
+        self._norm_axes = norm_axes
+
+    def _add_soft_max_and_dropout_layers(self):
+        self._softmax = advanced_activations.Softmax(axis=self._norm_axes)
+        self._dropout_layer = core.Dropout(rate=self._dropout)
+
+    def _add_normalisation_equation(self, rank):
+        result = self._build_normalisation_equation(rank, self._attention_axes)
+        self._k1_equation, self._q_k1_equation, self._qk1_q_equation = result
 
     def quadratic_attention(self, query, key, value, attention_mask=None, training=None):
-        query = multiply(query, 1.0 / math.sqrt(float(self._key_dim)))
-
+        query = multiply(query, 1. / math.sqrt(float(self._key_dim)))
         attention_scores = einsum(self._dot_product_equation, key, query)
         attention_scores = self._masked_softmax(attention_scores, attention_mask)
-
-        attention_scores_dropout = self._dropout_layer(
-            attention_scores, training=training)
-
+        attention_scores_dropout = self._dropout_layer(attention_scores, training=training)
         attention_output = einsum(self._combine_equation, attention_scores_dropout, value)
         return attention_output, attention_scores
 
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
+        if attention_mask is not None:
+            raise(NotImplementedError('masked linear attention not implemented'))
         random_features = self.sampler.get_2d_array()
         lifted_query = kernel_feature_creator(query, random_features, True)
         lifted_key = kernel_feature_creator(key, random_features, False)
-
         kv = einsum(self._dot_product_equation, lifted_key, value)
         qkv = einsum(self._combine_equation, lifted_query, kv)
+        normalised_qkv = self._normalise(lifted_key, lifted_query, qkv)
+        return normalised_qkv, None
+
+    def _normalise(self, lifted_key, lifted_query, qkv):
         ones = tf.ones_like(lifted_key[..., 0])
-
-        eq1, eq2, eq3 = self._normalisation_equations
-        k_ones = einsum(eq1, lifted_key, ones)
-        D = einsum(eq2, lifted_query, k_ones)
-        D = 1 / (D + 1e-6)
-        out = einsum(eq3, D, qkv)
-        return out, None
-
-
-if __name__ == '__main__':
-    initializer = tf.keras.initializers.RandomNormal(seed=0)
-    layer = Performer(num_heads=2, key_dim=20, attention_method='quadratic',
-                      kernel_initializer=initializer, bias_initializer='zeros')
-    linear_layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=1000,
-                      kernel_initializer=initializer, bias_initializer='zeros')
-
-    query = tf.keras.layers.Input(shape=[4, 3])
-
-    exact = layer(query, query)
-    approx = linear_layer(query, query)
+        k_ones = einsum(self._k1_equation, lifted_key, ones)
+        D = einsum(self._q_k1_equation, lifted_query, k_ones)
+        D = 1. / (D + 1e-6)
+        normalised_qkv = einsum(self._qk1_q_equation, D, qkv)
+        return normalised_qkv
