@@ -18,7 +18,6 @@ linear_attention = [(4, (1, 2), ('aefr,aefd->ard', 'abcr,ard->abcd', 3)),
 normalisation_equation = [(4, (1, ), ('abcd,abc->acd', 'abcd,acd->abc', 'abc,abcd->abcd')),
                           (4, (1, 2), ('abcd,abc->ad', 'abcd,ad->abc', 'abc,abcd->abcd'))]
 
-
 kernel_equation = [(6, 'abcdef,abgf->abcdeg'),
                    (3, 'abc,abdc->abd'),
                    (7, 'abcdefg,abhg->abcdefh')]
