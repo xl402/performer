@@ -19,10 +19,10 @@ class TokenAndPositionEmbedding(layers.Layer):
 
 
 class TransformerBlock(layers.Layer):
-    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
+    def __init__(self, embed_dim, num_heads, ff_dim, method, supports, rate=0.1):
         super(TransformerBlock, self).__init__()
         self.att = Performer(num_heads=num_heads, key_dim=embed_dim,
-                             attention_method='linear', supports=200)
+                             attention_method=method, supports=supports)
         self.ffn = keras.Sequential(
             [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim),]
         )
@@ -52,11 +52,14 @@ if __name__ == '__main__':
     embed_dim = 32  # Embedding size for each token
     num_heads = 2  # Number of attention heads
     ff_dim = 32  # Hidden layer size in feed forward network inside transformer
+    method = 'linear'
+    supports = 10
 
     inputs = layers.Input(shape=(maxlen,))
     embedding_layer = TokenAndPositionEmbedding(maxlen, vocab_size, embed_dim)
     x = embedding_layer(inputs)
-    transformer_block = TransformerBlock(embed_dim, num_heads, ff_dim)
+    transformer_block = TransformerBlock(embed_dim, num_heads,
+                                         ff_dim, method, supports)
     x = transformer_block(x)
     x = layers.GlobalAveragePooling1D()(x)
     x = layers.Dropout(0.1)(x)
