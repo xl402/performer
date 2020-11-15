@@ -36,6 +36,7 @@ def test_performer_linear_attention_approximates_quadratic_attention(inputs, num
     approx_layer = Performer(attention_method='linear', supports=1000, **kwargs)
     exact_layer = Performer(attention_method='quadratic', **kwargs)
 
+    tf.random.set_seed(42)
     query = tf.random.uniform(shape=q_shape, dtype='float32')
     value = tf.random.uniform(shape=v_shape, dtype='float32')
     key = tf.random.uniform(shape=k_shape, dtype='float32')
