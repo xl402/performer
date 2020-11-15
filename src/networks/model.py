@@ -22,12 +22,14 @@ class Performer(MultiHeadAttention):
         self.attention_method = kwargs.pop('attention_method', 'quadratic')
         message = 'invalid attention method'
         self.scaling = kwargs.pop('scaling', 1)
-        self.supports = kwargs.pop('supports', 200)
+        self.supports = kwargs.pop('supports', None)
         assert self.attention_method in ['linear', 'quadratic'], message
         if self.attention_method == 'quadratic':
             self._compute_attention = self.quadratic_attention
             self._build_attention_equation = build_quadratic_attention_equation
         else:
+            if self.supports is None:
+                raise(RuntimeError('must have numbers of supports specified'))
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
