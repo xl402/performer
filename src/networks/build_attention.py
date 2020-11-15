@@ -8,8 +8,8 @@ def build_quadratic_attention_equation(rank, attn_axes):
     query_notation, value_notation = _get_query_and_value_notation(rank, batch_dims)
     key_notation = value_notation
     qk_product_notation = "".join([query_notation[i] for i in batch_dims] +
-                                 [query_notation[i] for i in attn_axes] +
-                                 [key_notation[i] for i in attn_axes])
+                                  [query_notation[i] for i in attn_axes] +
+                                  [key_notation[i] for i in attn_axes])
     kq_product_equation = f"{key_notation},{query_notation}->{qk_product_notation}"
     qk_v_product_equation = f"{qk_product_notation},{value_notation}->{query_notation}"
     attn_scores_rank = len(qk_product_notation)
