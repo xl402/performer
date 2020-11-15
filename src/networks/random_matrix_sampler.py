@@ -11,7 +11,6 @@ _CHR_IDX = string.ascii_lowercase
 
 
 class GaussianOrthogonalRandomMatrix:
-
     def __init__(self, rows, columns, scaling=0):
         self.rows = rows
         self.columns = columns
