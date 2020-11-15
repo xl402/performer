@@ -61,26 +61,27 @@ class Performer(MultiHeadAttention):
 
     def quadratic_attention(self, query, key, value, attention_mask=None, training=None):
         query = multiply(query, 1. / math.sqrt(float(self._key_dim)))
-
         attention_scores = einsum(self._dot_product_equation, key, query)
         attention_scores = self._masked_softmax(attention_scores, attention_mask)
-
         attention_scores_dropout = self._dropout_layer(attention_scores, training=training)
-
         attention_output = einsum(self._combine_equation, attention_scores_dropout, value)
         return attention_output, attention_scores
 
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
+        if attention_mask is not None:
+            raise(NotImplementedError('masked linear attention not implemented'))
         random_features = self.sampler.get_2d_array()
         lifted_query = kernel_feature_creator(query, random_features, True)
         lifted_key = kernel_feature_creator(key, random_features, False)
-
         kv = einsum(self._dot_product_equation, lifted_key, value)
         qkv = einsum(self._combine_equation, lifted_query, kv)
+        normalised_qkv = self._normalise(lifted_key, lifted_query, qkv)
+        return normalised_qkv, None
 
+    def _normalise(self, lifted_key, lifted_query, qkv):
         ones = tf.ones_like(lifted_key[..., 0])
         k_ones = einsum(self._k1_equation, lifted_key, ones)
         D = einsum(self._q_k1_equation, lifted_query, k_ones)
         D = 1. / (D + 1e-6)
-        out = einsum(self._qk1_q_equation, D, qkv)
-        return out, None
+        normalised_qkv = einsum(self._qk1_q_equation, D, qkv)
+        return normalised_qkv
