@@ -1,4 +1,5 @@
 import string
+from functools import partial
 
 import numpy as np
 import tensorflow as tf
@@ -18,23 +19,10 @@ class GaussianOrthogonalRandomMatrix:
         assert self.scaling in [0, 1], 'Scaling must be one of {0, 1}'
 
     def get_2d_array(self):
-        nb_full_blocks = int(self.rows / self.columns)
-        block_list = []
-
-        square_size = (self.columns, self.columns)
-        for _ in range(nb_full_blocks):
-            unstructured_block = tf.random.normal(shape=square_size)
-            q, _ = tf.linalg.qr(unstructured_block)
-            q = tf.transpose(q)
-            block_list.append(q)
-
-        remaining_rows = self.rows - nb_full_blocks * self.columns
-        if remaining_rows > 0:
-            unstructured_block = tf.random.normal(shape=square_size)
-            q, _ = tf.linalg.qr(unstructured_block)
-            q = tf.transpose(q)
-            block_list.append(q[:remaining_rows])
-        final_matrix = tf.concat(block_list, axis=0)
+        shape = (self.rows, self.columns)
+        unstructured_block = tf.random.normal(shape=shape)
+        q, r = tf.linalg.qr(unstructured_block)
+        final_matrix = q if self.rows >= self.columns else r
 
         multiplier = self._get_multiplier()
         out = tf.matmul(tf.linalg.diag(multiplier), final_matrix)
@@ -67,7 +55,7 @@ def kernel_feature_creator(data, projection_matrix, is_query):
 
     normalised_data = data_normalizer * data
     dot_product_equation = build_kernel_equation(len(data.shape))
-    data_dash = tf.einsum(dot_product_equation, normalised_data, random_matrix)
+    data_hat = tf.einsum(dot_product_equation, normalised_data, random_matrix)
 
     diag_data = tf.math.square(data)
     diag_data = tf.math.reduce_sum(diag_data, axis=- 1)
@@ -75,10 +63,9 @@ def kernel_feature_creator(data, projection_matrix, is_query):
     diag_data = tf.expand_dims(diag_data, axis=-1)
 
     if is_query:
-        last_dims_t = len(data_dash.shape) - 1
-        data_dash = ratio * (
-                  tf.math.exp(data_dash - diag_data -
-                  tf.math.reduce_max(data_dash, axis=last_dims_t, keepdims=True)) + 1e-4)
+        last_dims_t = len(data_hat.shape) - 1
+        func = partial(tf.math.reduce_max, axis=last_dims_t, keepdims=True)
     else:
-        data_dash = ratio * (tf.math.exp(data_dash - diag_data - tf.math.reduce_max(data_dash)) + 1e-4)
-    return data_dash
+        func = tf.math.reduce_max
+    out = ratio * (tf.math.exp(data_hat - diag_data - func(data_hat)) + 1e-4)
+    return out
