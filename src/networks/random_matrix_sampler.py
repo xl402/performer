@@ -66,8 +66,8 @@ def kernel_feature_creator(data, projection_matrix, is_query):
     random_matrix = tf.zeros(data_mod_shape) + projection_matrix
 
     normalised_data = data_normalizer * data
-    equation = build_kernel_equation(len(data.shape))
-    data_dash = tf.einsum(equation, normalised_data, random_matrix)
+    dot_product_equation = build_kernel_equation(len(data.shape))
+    data_dash = tf.einsum(dot_product_equation, normalised_data, random_matrix)
 
     diag_data = tf.math.square(data)
     diag_data = tf.math.reduce_sum(diag_data, axis=- 1)

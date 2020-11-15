@@ -42,15 +42,18 @@ class Performer(MultiHeadAttention):
             self._attention_axes = tuple(self._attention_axes)
         self._dot_product_equation, self._combine_equation, attn_scores_rank = (
              self._build_attention_equation(rank, attn_axes=self._attention_axes))
+
         norm_axes = tuple(range(attn_scores_rank - len(self._attention_axes), attn_scores_rank))
         self._softmax = advanced_activations.Softmax(axis=norm_axes)
         self._dropout_layer = core.Dropout(rate=self._dropout)
+
         if hasattr(self, '_build_normalisation_equation'):
-            self._normalisation_equations = self._build_normalisation_equation(rank, self._attention_axes)
+            self._normalisation_equations = (
+                    self._build_normalisation_equation(rank, self._attention_axes))
 
 
     def quadratic_attention(self, query, key, value, attention_mask=None, training=None):
-        query = multiply(query, 1.0 / math.sqrt(float(self._key_dim)))
+        query = multiply(query, 1. / math.sqrt(float(self._key_dim)))
 
         attention_scores = einsum(self._dot_product_equation, key, query)
         attention_scores = self._masked_softmax(attention_scores, attention_mask)
@@ -68,13 +71,13 @@ class Performer(MultiHeadAttention):
 
         kv = einsum(self._dot_product_equation, lifted_key, value)
         qkv = einsum(self._combine_equation, lifted_query, kv)
-        ones = tf.ones_like(lifted_key[..., 0])
 
-        eq1, eq2, eq3 = self._normalisation_equations
-        k_ones = einsum(eq1, lifted_key, ones)
-        D = einsum(eq2, lifted_query, k_ones)
-        D = 1 / (D + 1e-6)
-        out = einsum(eq3, D, qkv)
+        k1_equation, q_k1_equation, qk1_q_equation = self._normalisation_equations
+        ones = tf.ones_like(lifted_key[..., 0])
+        k_ones = einsum(k1_equation, lifted_key, ones)
+        D = einsum(q_k1_equation, lifted_query, k_ones)
+        D = 1. / (D + 1e-6)
+        out = einsum(qk1_q_equation, D, qkv)
         return out, None
 
 

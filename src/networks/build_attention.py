@@ -51,18 +51,21 @@ def _get_query_and_value_notation(rank, batch_dims):
 
 def build_normalisation_equation(rank, attn_axes):
     chr_idx = string.ascii_lowercase
-    source = chr_idx[:rank]
-    target = "".join(np.delete(list(source), attn_axes, 0))
-    eq1 = f"{source},{source[:-1]}->{target}"
-    eq2 = f"{source},{target}->{source[:-1]}"
-    eq3 = f"{source[:-1]},{source}->{source}"
-    return eq1, eq2, eq3
+    key_hat_notation = chr_idx[:rank]
+    query_hat_notation = key_hat_notation
+    ones_array_notation = key_hat_notation[:-1]
+    key_ones_notation = "".join(np.delete(list(key_hat_notation), attn_axes, 0))
+    k1_equation = f"{key_hat_notation},{ones_array_notation}->{key_ones_notation}"
+    q_k1_equation = f"{query_hat_notation},{key_ones_notation}->{ones_array_notation}"
+    qk1_q_equation = f"{ones_array_notation},{key_hat_notation}->{query_hat_notation}"
+    return k1_equation, q_k1_equation, qk1_q_equation
 
 
 def build_kernel_equation(rank):
     chr_idx = string.ascii_lowercase
     strings = chr_idx[:rank+1]
-    source1 = strings[:-1]
-    source2 = strings[:2] + strings[-1] + strings[-2]
-    combine_equation = f"{source1},{source2}->{source1[:-1]+strings[-1]}"
+    data_notation = strings[:-1]
+    sampling_matrix_notation = strings[:2] + strings[-1] + strings[-2]
+    product = data_notation[:-1]+strings[-1]
+    combine_equation = f"{data_notation},{sampling_matrix_notation}->{product}"
     return combine_equation
