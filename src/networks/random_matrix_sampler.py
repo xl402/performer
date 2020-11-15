@@ -33,7 +33,7 @@ class GaussianOrthogonalRandomMatrix:
             unstructured_block = tf.random.normal(shape=square_size)
             q, _ = tf.linalg.qr(unstructured_block)
             q = tf.transpose(q)
-            block_list.append(q[0:remaining_rows])
+            block_list.append(q[:remaining_rows])
         final_matrix = tf.concat(block_list, axis=0)
 
         multiplier = self._get_multiplier()
