@@ -84,16 +84,3 @@ class Performer(MultiHeadAttention):
         D = 1. / (D + 1e-6)
         out = einsum(self._qk1_q_equation, D, qkv)
         return out, None
-
-
-if __name__ == '__main__':
-    initializer = tf.keras.initializers.RandomNormal(seed=0)
-    layer = Performer(num_heads=2, key_dim=20, attention_method='quadratic',
-                      kernel_initializer=initializer, bias_initializer='zeros')
-    linear_layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=1000,
-                      kernel_initializer=initializer, bias_initializer='zeros')
-
-    query = tf.keras.layers.Input(shape=[4, 3])
-
-    exact = layer(query, query)
-    approx = linear_layer(query, query)
