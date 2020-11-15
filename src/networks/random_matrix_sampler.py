@@ -67,6 +67,5 @@ def kernel_feature_creator(data, projection_matrix, is_query):
         func = partial(tf.math.reduce_max, axis=last_dims_t, keepdims=True)
     else:
         func = tf.math.reduce_max
-
     out = ratio * (tf.math.exp(data_hat - diag_data - func(data_hat)) + 1e-4)
     return out
