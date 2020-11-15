@@ -21,13 +21,13 @@ class Performer(MultiHeadAttention):
     def __init__(self, *args, **kwargs):
         self.attention_method = kwargs.pop('attention_method', 'quadratic')
         message = 'invalid attention method'
+        self.scaling = kwargs.pop('scaling', 1)
+        self.supports = kwargs.pop('supports', 200)
         assert self.attention_method in ['linear', 'quadratic'], message
         if self.attention_method == 'quadratic':
             self._compute_attention = self.quadratic_attention
             self._build_attention_equation = build_quadratic_attention_equation
         else:
-            self.scaling = kwargs.pop('scaling', 1)
-            self.supports = kwargs.pop('supports', 200)
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
