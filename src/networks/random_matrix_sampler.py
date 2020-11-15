@@ -1,4 +1,5 @@
 import string
+from functools import partial
 
 import numpy as np
 import tensorflow as tf
@@ -54,7 +55,7 @@ def kernel_feature_creator(data, projection_matrix, is_query):
 
     normalised_data = data_normalizer * data
     dot_product_equation = build_kernel_equation(len(data.shape))
-    data_dash = tf.einsum(dot_product_equation, normalised_data, random_matrix)
+    data_hat = tf.einsum(dot_product_equation, normalised_data, random_matrix)
 
     diag_data = tf.math.square(data)
     diag_data = tf.math.reduce_sum(diag_data, axis=- 1)
@@ -62,10 +63,10 @@ def kernel_feature_creator(data, projection_matrix, is_query):
     diag_data = tf.expand_dims(diag_data, axis=-1)
 
     if is_query:
-        last_dims_t = len(data_dash.shape) - 1
-        data_dash = ratio * (
-                  tf.math.exp(data_dash - diag_data -
-                  tf.math.reduce_max(data_dash, axis=last_dims_t, keepdims=True)) + 1e-4)
+        last_dims_t = len(data_hat.shape) - 1
+        func = partial(tf.math.reduce_max, axis=last_dims_t, keepdims=True)
     else:
-        data_dash = ratio * (tf.math.exp(data_dash - diag_data - tf.math.reduce_max(data_dash)) + 1e-4)
-    return data_dash
+        func = tf.math.reduce_max
+
+    out = ratio * (tf.math.exp(data_hat - diag_data - func(data_hat)) + 1e-4)
+    return out
