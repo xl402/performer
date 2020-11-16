@@ -31,6 +31,7 @@ class Performer(MultiHeadAttention):
             if self.supports is None:
                 raise(RuntimeError('must have numbers of supports specified'))
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
+            self._random_features = self.sampler.get_2d_array()
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
             self._build_normalisation_equation = build_normalisation_equation
@@ -72,13 +73,18 @@ class Performer(MultiHeadAttention):
     def linear_attention(self, query, key, value, attention_mask=None, training=None):
         if attention_mask is not None:
             raise(NotImplementedError('masked linear attention not implemented'))
-        random_features = self.sampler.get_2d_array()
+        random_features = self._get_random_features(training)
         lifted_query = kernel_feature_creator(query, random_features, True)
         lifted_key = kernel_feature_creator(key, random_features, False)
         kv = einsum(self._dot_product_equation, lifted_key, value)
         qkv = einsum(self._combine_equation, lifted_query, kv)
         normalised_qkv = self._normalise(lifted_key, lifted_query, qkv)
         return normalised_qkv, None
+
+    @tf.function
+    def _get_random_features(self, train):
+        out = self.sampler.get_2d_array() if train is None else self._random_features
+        return out
 
     def _normalise(self, lifted_key, lifted_query, qkv):
         ones = tf.ones_like(lifted_key[..., 0])
