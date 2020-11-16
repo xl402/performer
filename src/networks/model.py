@@ -20,10 +20,9 @@ logging.basicConfig(level=logging.DEBUG)
 class Performer(MultiHeadAttention):
     def __init__(self, *args, **kwargs):
         self.attention_method = kwargs.pop('attention_method', 'quadratic')
-        message = 'invalid attention method'
         self.scaling = kwargs.pop('scaling', 0)
         self.supports = kwargs.pop('supports', None)
-        assert self.attention_method in ['linear', 'quadratic'], message
+        self._check_attention_method_is_valid()
         if self.attention_method == 'quadratic':
             self._compute_attention = self.quadratic_attention
             self._build_attention_equation = build_quadratic_attention_equation
@@ -39,6 +38,10 @@ class Performer(MultiHeadAttention):
     def _check_supports_is_not_none(self):
         if self.supports is None:
             raise(RuntimeError('must have numbers of supports specified'))
+
+    def _check_attention_method_is_valid(self):
+        message = 'invalid attention method'
+        assert self.attention_method in ['linear', 'quadratic'], message
 
     def _build_attention(self, rank):
         if self._attention_axes is None:
