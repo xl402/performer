@@ -70,3 +70,18 @@ def test_performer_raises_on_linear_attention_without_supports():
     with pytest.raises(RuntimeError) as e:
         Performer(num_heads=2, key_dim=20, attention_method='linear')
     assert 'must have numbers of supports specified' in str(e)
+
+
+@pytest.mark.parametrize('attn_method', ATTN_METHODS)
+def test_performer_freezes_during_inference_time(attn_method):
+    layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method, supports=2)
+    x = tf.random.uniform(shape=(2, 4, 3))
+    y = tf.random.uniform(shape=(2, 4, 3))
+    inputs = tf.keras.layers.Input(shape=[4, 3])
+    outputs = layer(inputs, inputs)
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    model.compile("adam", "mean_squared_error")
+    model.fit(x, y, epochs=1)
+    y1 = model.predict(x)
+    y2 = model.predict(x)
+    assert np.allclose(y1, y2)
