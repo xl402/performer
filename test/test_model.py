@@ -54,18 +54,6 @@ def test_performer_is_compatible_with_keras_input_layer(attn_method):
     np.testing.assert_array_equal(out.shape, [None, 4, 3])
 
 
-@pytest.mark.parametrize('attn_method', ATTN_METHODS)
-def test_performer_compiles_and_trains(attn_method):
-    layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method, supports=1)
-    x = tf.random.uniform(shape=(2, 4, 3))
-    y = tf.random.uniform(shape=(2, 4, 3))
-    inputs = tf.keras.layers.Input(shape=[4, 3])
-    outputs = layer(inputs, inputs)
-    model = tf.keras.Model(inputs=inputs, outputs=outputs)
-    model.compile("adam", "mean_squared_error")
-    model.fit(x, y, epochs=1)
-
-
 def test_performer_raises_on_linear_attention_without_supports():
     with pytest.raises(RuntimeError) as e:
         Performer(num_heads=2, key_dim=20, attention_method='linear')
