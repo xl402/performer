@@ -28,15 +28,17 @@ class Performer(MultiHeadAttention):
             self._compute_attention = self.quadratic_attention
             self._build_attention_equation = build_quadratic_attention_equation
         else:
-            if self.supports is None:
-                raise(RuntimeError('must have numbers of supports specified'))
+            self._check_supports_is_not_none()
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
             self._random_features = self.sampler.get_2d_array()
             self._compute_attention = self.linear_attention
             self._build_attention_equation = build_linear_attention_equation
             self._build_normalisation_equation = build_normalisation_equation
-
         super().__init__(*args, **kwargs)
+
+    def _check_supports_is_not_none(self):
+        if self.supports is None:
+            raise(RuntimeError('must have numbers of supports specified'))
 
     def _build_attention(self, rank):
         if self._attention_axes is None:
