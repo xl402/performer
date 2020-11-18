@@ -15,9 +15,8 @@ KEY_DIMS = [1, 5]
 SAVE_FORMATS = ['saved_model', 'saved_model.h5']
 
 
-@pytest.mark.parametrize('attn_method', 'save_format', product(ATTN_METHODS, SAVE_FORMATS))
-def test_save_model(attn_method, save_format, tmpdir):
-    layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method, supports=2)
+def test_save_model(tmpdir):
+    layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=2)
     x = tf.random.uniform(shape=(2, 4, 3))
     y = tf.random.uniform(shape=(2, 4, 3))
     inputs = tf.keras.layers.Input(shape=[4, 3])
@@ -25,30 +24,12 @@ def test_save_model(attn_method, save_format, tmpdir):
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     model.compile("adam", "mean_squared_error")
     model.fit(x, y, epochs=1)
-    import pdb; pdb.set_trace()
-    model.save(tmpdir.join(save_format))
-    load_model = tf.keras.models.load_model(tmpdir.join(save_format))
-    result1 = model(x)
-    result2 = load_model(x)
+    model.save(tmpdir.join('saved_model'))
+    load_model = tf.keras.models.load_model(tmpdir.join('saved_model'))
+    result1 = model.predict(x)
+    result2 = load_model.predict(x)
     assert np.allclose(result1, result2)
 
-
-@pytest.mark.parametrize('attn_method', 'save_format', 'tmpdir', product(ATTN_METHODS, SAVE_FORMATS, tmpdir))
-def test_save_model(attn_method, save_format, tmpdir):
-    layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method, supports=2)
-    x = tf.random.uniform(shape=(2, 4, 3))
-    y = tf.random.uniform(shape=(2, 4, 3))
-    inputs = tf.keras.layers.Input(shape=[4, 3])
-    outputs = layer(inputs, inputs)
-    model = tf.keras.Model(inputs=inputs, outputs=outputs)
-    model.compile("adam", "mean_squared_error")
-    model.fit(x, y, epochs=1)
-    import pdb; pdb.set_trace()
-    model.save(tmpdir.join(save_format))
-    load_model = tf.keras.models.load_model(tmpdir.join(save_format))
-    result1 = model(x)
-    result2 = load_model(x)
-    assert np.allclose(result1, result2)
 
 @pytest.mark.parametrize('inputs, attn_method', product(INPUT_SHAPES, ATTN_METHODS))
 def test_performer_output_is_same_shape_as_query(inputs, attn_method):
