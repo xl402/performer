@@ -15,7 +15,8 @@ KEY_DIMS = [1, 5]
 SAVE_FORMATS = ['saved_model', 'saved_model.h5']
 
 
-def test_save_model(tmpdir):
+@pytest.mark.parametrize('attn_method', ATTN_METHODS)
+def test_save_model(tmpdir, attn_method):
     layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=2)
     x = tf.random.uniform(shape=(2, 4, 3))
     y = tf.random.uniform(shape=(2, 4, 3))
