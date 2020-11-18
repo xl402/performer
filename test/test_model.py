@@ -15,8 +15,8 @@ KEY_DIMS = [1, 5]
 SAVE_FORMATS = ['saved_model', 'saved_model.h5']
 
 
-@pytest.mark.parametrize('attn_method', ATTN_METHODS)
-def test_save_model(tmpdir, attn_method):
+@pytest.mark.parametrize('attn_method, save_formats', product(ATTN_METHODS, SAVE_FORMATS))
+def test_save_model(tmpdir, attn_method, save_formats):
     layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=2)
     x = tf.random.uniform(shape=(2, 4, 3))
     y = tf.random.uniform(shape=(2, 4, 3))
@@ -25,8 +25,8 @@ def test_save_model(tmpdir, attn_method):
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     model.compile("adam", "mean_squared_error")
     model.fit(x, y, epochs=1)
-    model.save(tmpdir.join('saved_model'))
-    load_model = tf.keras.models.load_model(tmpdir.join('saved_model'))
+    model.save(tmpdir.join(save_formats))
+    load_model = tf.keras.models.load_model(tmpdir.join(save_formats))
     result1 = model.predict(x)
     result2 = load_model.predict(x)
     assert np.allclose(result1, result2)
