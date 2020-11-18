@@ -12,12 +12,10 @@ INPUT_SHAPES = [([1, 18, 16], [1, 4, 12], [1, 4, 12], (1,)),
 ATTN_METHODS = ['linear', 'quadratic']
 NUM_HEADS = [1, 3, 5]
 KEY_DIMS = [1, 5]
-SAVE_FORMATS = ['saved_model', 'saved_model.h5']
 
 
-@pytest.mark.parametrize('attn_method', product(ATTN_METHODS))
-def test_save_model(tmpdir, attn_method):
-    layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=2)
+def get_fitted_model(**kwargs):
+    layer = Performer(**kwargs)
     x = tf.random.uniform(shape=(2, 4, 3))
     y = tf.random.uniform(shape=(2, 4, 3))
     inputs = tf.keras.layers.Input(shape=[4, 3])
@@ -25,23 +23,28 @@ def test_save_model(tmpdir, attn_method):
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     model.compile("adam", "mean_squared_error")
     model.fit(x, y, epochs=1)
+    fitting_data = (x, y)
+    return model, fitting_data
+
+
+@pytest.mark.parametrize('attn_method', ATTN_METHODS)
+def _test_save_model_to_h5_format(tmpdir, attn_method):
+    kwargs = {'num_heads': 2, 'key_dim': 20,
+              'attention_method': attn_method, 'supports':2}
+    model, (x, y) = get_fitted_model(**kwargs)
     model.save(tmpdir.join('saved_model.h5'))
-    load_model = tf.keras.models.load_model(tmpdir.join('saved_model.h5'), custom_objects={'Performer': Performer})
+    load_model = tf.keras.models.load_model(tmpdir.join('saved_model.h5'),
+                                            custom_objects={'Performer': Performer})
     result1 = model.predict(x)
     result2 = load_model.predict(x)
     assert np.allclose(result1, result2)
 
 
-@pytest.mark.parametrize('attn_method', product(ATTN_METHODS))
-def test_save_model(tmpdir, attn_method):
-    layer = Performer(num_heads=2, key_dim=20, attention_method='linear', supports=2)
-    x = tf.random.uniform(shape=(2, 4, 3))
-    y = tf.random.uniform(shape=(2, 4, 3))
-    inputs = tf.keras.layers.Input(shape=[4, 3])
-    outputs = layer(inputs, inputs)
-    model = tf.keras.Model(inputs=inputs, outputs=outputs)
-    model.compile("adam", "mean_squared_error")
-    model.fit(x, y, epochs=1)
+@pytest.mark.parametrize('attn_method', ATTN_METHODS)
+def test_save_model_to_serial_object(tmpdir, attn_method):
+    kwargs = {'num_heads': 2, 'key_dim': 20,
+              'attention_method': attn_method, 'supports':2}
+    model, (x, y) = get_fitted_model(**kwargs)
     model.save(tmpdir.join('saved_model'))
     load_model = tf.keras.models.load_model(tmpdir.join('saved_model'))
     result1 = model.predict(x)
@@ -97,14 +100,9 @@ def test_performer_raises_on_linear_attention_without_supports():
 
 @pytest.mark.parametrize('attn_method', ATTN_METHODS)
 def test_performer_freezes_during_inference_time(attn_method):
-    layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method, supports=2)
-    x = tf.random.uniform(shape=(2, 4, 3))
-    y = tf.random.uniform(shape=(2, 4, 3))
-    inputs = tf.keras.layers.Input(shape=[4, 3])
-    outputs = layer(inputs, inputs)
-    model = tf.keras.Model(inputs=inputs, outputs=outputs)
-    model.compile("adam", "mean_squared_error")
-    model.fit(x, y, epochs=1)
+    kwargs = {'num_heads': 2, 'key_dim': 20,
+              'attention_method': attn_method, 'supports':2}
+    model, (x, y) = get_fitted_model(**kwargs)
     y1 = model.predict(x)
     y2 = model.predict(x)
     assert np.allclose(y1, y2)
