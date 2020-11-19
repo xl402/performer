@@ -35,6 +35,11 @@ class Performer(MultiHeadAttention):
             self._build_normalisation_equation = build_normalisation_equation
         super().__init__(*args, **kwargs)
 
+    def get_config(self):
+        config = super(Performer, self).get_config()
+        config.update({'scaling': self.scaling, 'supports': self.scaling, 'attention_method': self.attention_method})
+        return config
+
     def _check_supports_is_not_none(self):
         if self.supports is None:
             raise(RuntimeError('must have numbers of supports specified'))
