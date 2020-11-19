@@ -12,6 +12,7 @@ from networks.random_matrix_sampler import kernel_feature_creator
 from networks.build_attention import build_linear_attention_equation
 from networks.build_attention import build_quadratic_attention_equation
 from networks.build_attention import build_normalisation_equation
+import numpy as np
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -34,11 +35,6 @@ class Performer(MultiHeadAttention):
             self._random_features = self.sampler.get_2d_array()
             self._build_normalisation_equation = build_normalisation_equation
         super().__init__(*args, **kwargs)
-
-    def get_config(self):
-        config = super(Performer, self).get_config()
-        config.update({'scaling': self.scaling, 'supports': self.scaling, 'attention_method': self.attention_method})
-        return config
 
     def _check_supports_is_not_none(self):
         if self.supports is None:

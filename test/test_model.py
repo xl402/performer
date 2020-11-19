@@ -24,17 +24,17 @@ def get_fitted_model(**kwargs):
     model.compile("adam", "mean_squared_error")
     model.fit(x, y, epochs=1)
     fitting_data = (x, y)
-    return model, fitting_data, layer
+    return model, fitting_data
 
 
 @pytest.mark.parametrize('attn_method', ATTN_METHODS)
 def test_save_model_to_h5_format(tmpdir, attn_method):
     kwargs = {'num_heads': 2, 'key_dim': 20,
               'attention_method': attn_method, 'supports':2}
-    model, (x, y), layer = get_fitted_model(**kwargs)
+    model, (x, y) = get_fitted_model(**kwargs)
     model.save(tmpdir.join('saved_model.h5'))
     load_model = tf.keras.models.load_model(tmpdir.join('saved_model.h5'),
-                                            custom_objects={'Performer': layer}, compile=True)
+                                            custom_objects={'Performer': Performer})
     load_model.layers[1] = model.layers[1]
     result1 = model.predict(x)
     result2 = load_model.predict(x)
