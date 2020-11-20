@@ -19,6 +19,24 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class Performer(MultiHeadAttention):
+    """Performer Layer
+
+    This is an implementation of multi-head attention with linear attention via
+    positive orthogonal random features approach. Implemented to be fully
+    compatable with tensorflow's existing MultiHeadAttention layer.
+
+    Examples:
+    >>> layer = Performer(num_heads=2, key_dim=2,
+                          attention_method='linear', supports=2)
+    >>> target = tf.keras.Input(shape=[8, 16])
+    >>> source = tf.keras.Input(shape=[4, 16])
+    >>> output_tensor, weights = layer(target, source,
+      ...                              return_attention_scores=True)
+    >>> print(output_tensor.shape)
+    (None, 8, 16)
+    >>> print(weights.shape)
+    (None, 2, 8, 4)
+    """
     def __init__(self, *args, **kwargs):
         self.attention_method = kwargs.pop('attention_method', 'quadratic')
         self.scaling = kwargs.pop('scaling', 0)
