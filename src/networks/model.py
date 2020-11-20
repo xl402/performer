@@ -52,12 +52,11 @@ class Performer(MultiHeadAttention):
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
             self._frozen_features = self._get_frozen_random_features(kwargs)
             self._build_normalisation_equation = build_normalisation_equation
-        kwargs.pop('_frozen_features', None)
         super().__init__(*args, **kwargs)
 
     def _get_frozen_random_features(self, kwargs):
         if '_frozen_features' in kwargs:
-            frozen_features = kwargs['_frozen_features']
+            frozen_features = kwargs.pop('_frozen_features')
         else:
             frozen_features = self.sampler.get_2d_array()
         return tf.constant(frozen_features, name='_frozen_features')
