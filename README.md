@@ -14,9 +14,9 @@ This repo requires Python 3.7 and above. Install requirements by running:
 ```
 pip install -r requirements.txt
 ```
-Then expoert `src` to path:
+Then export project to python path:
 ```
-export PYTHONPATH=PATH_TO_REPO/src
+export PYTHONPATH=$PATH_TO_REPO/performer
 ```
 To test the scripts, run `pytest` in the root directory
 
