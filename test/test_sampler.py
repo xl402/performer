@@ -18,7 +18,7 @@ KERNEL_DATA = [((4, 1, 2, 3, 5, 8), (100, 8), (4, 1, 2, 3, 5, 100)),
 @pytest.mark.parametrize('rows, columns', product([1, 10, 20], [1, 10, 20]))
 def test_gaussian_orthogonal_random_matrix_has_correct_shape(rows, columns):
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling=0)
-    out = sampler.get_2d_array()
+    out = sampler.sample()
     assert out.shape == (rows, columns)
 
 
@@ -33,7 +33,7 @@ def test_gaussian_orthogonal_random_matix_repr_is_readable():
 def test_gaussian_orthogonal_random_matrix_off_diags_are_zeros(shape, scaling):
     rows, columns, scaling = shape, shape, scaling
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling)
-    out = sampler.get_2d_array().numpy()
+    out = sampler.sample().numpy()
     out = out @ out.T
     out = out - np.diag(np.diag(out))
     assert np.allclose(out, np.zeros(out.shape), atol=1e-4)
@@ -57,7 +57,7 @@ def test_kernel_feature_creator_returns_correct_shape(kernel_data):
 def test_kernel_feature_creator_approximates_attention():
     Q = tf.random.uniform(shape=(1, 2, 3, 4))
     K = tf.random.uniform(shape=(1, 2, 3, 4))
-    P = GaussianOrthogonalRandomMatrix(2000, 4).get_2d_array()
+    P = GaussianOrthogonalRandomMatrix(2000, 4).sample()
     Q_hat = kernel_feature_creator(Q, P, is_query=True)
     K_hat = kernel_feature_creator(K, P, is_query=False)
     A = _attention(Q, K, 'nonlinear')

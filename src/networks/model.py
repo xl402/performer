@@ -58,7 +58,7 @@ class Performer(MultiHeadAttention):
         if '_frozen_features' in kwargs:
             frozen_features = kwargs.pop('_frozen_features')
         else:
-            frozen_features = self.sampler.get_2d_array()
+            frozen_features = self.sampler.sample()
         return tf.constant(frozen_features, name='_frozen_features')
 
     def _check_supports_is_not_none(self):
@@ -114,7 +114,7 @@ class Performer(MultiHeadAttention):
 
     @tf.function
     def _get_random_features(self, train):
-        out = self.sampler.get_2d_array() if train is None else self._frozen_features
+        out = self.sampler.sample() if train is None else self._frozen_features
         return out
 
     def _normalise(self, lifted_key, lifted_query, qkv):
