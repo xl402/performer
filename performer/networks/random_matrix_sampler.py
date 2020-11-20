@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 import tensorflow as tf
 
-from performer.networks.build_attention import build_kernel_equation
+from networks.build_attention import build_kernel_equation
 
 
 _CHR_IDX = string.ascii_lowercase
@@ -17,7 +17,7 @@ class GaussianOrthogonalRandomMatrix:
         self.scaling = scaling
         assert self.scaling in [0, 1], 'Scaling must be one of {0, 1}'
 
-    def sample(self):
+    def get_2d_array(self):
         shape = (self.rows, self.columns)
         unstructured_block = tf.random.normal(shape=shape)
         q, r = tf.linalg.qr(unstructured_block)
@@ -45,7 +45,6 @@ class GaussianOrthogonalRandomMatrix:
 
 
 def kernel_feature_creator(data, projection_matrix, is_query):
-    """positive kernal features in arxiv 2009.14794.pdf p.4"""
     head_dim = tf.constant(data.shape[-1], dtype=tf.dtypes.float32)
     support_dim = tf.constant(projection_matrix.shape[0], dtype=tf.dtypes.float32)
     data_normalizer = 1.0 / (tf.math.sqrt(tf.math.sqrt(head_dim)))
