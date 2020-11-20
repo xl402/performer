@@ -5,8 +5,8 @@ import pickle
 import pytest
 import tensorflow as tf
 
-from networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix
-from networks.random_matrix_sampler import kernel_feature_creator
+from performer.networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix
+from performer.networks.random_matrix_sampler import kernel_feature_creator
 
 
 # data_shape, projection_matrix_shape, expected_shape
@@ -18,7 +18,7 @@ KERNEL_DATA = [((4, 1, 2, 3, 5, 8), (100, 8), (4, 1, 2, 3, 5, 100)),
 @pytest.mark.parametrize('rows, columns', product([1, 10, 20], [1, 10, 20]))
 def test_gaussian_orthogonal_random_matrix_has_correct_shape(rows, columns):
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling=0)
-    out = sampler.get_2d_array()
+    out = sampler.sample()
     assert out.shape == (rows, columns)
 
 
@@ -33,7 +33,7 @@ def test_gaussian_orthogonal_random_matix_repr_is_readable():
 def test_gaussian_orthogonal_random_matrix_off_diags_are_zeros(shape, scaling):
     rows, columns, scaling = shape, shape, scaling
     sampler = GaussianOrthogonalRandomMatrix(rows, columns, scaling)
-    out = sampler.get_2d_array().numpy()
+    out = sampler.sample().numpy()
     out = out @ out.T
     out = out - np.diag(np.diag(out))
     assert np.allclose(out, np.zeros(out.shape), atol=1e-4)
@@ -57,22 +57,12 @@ def test_kernel_feature_creator_returns_correct_shape(kernel_data):
 def test_kernel_feature_creator_approximates_attention():
     Q = tf.random.uniform(shape=(1, 2, 3, 4))
     K = tf.random.uniform(shape=(1, 2, 3, 4))
-    P = GaussianOrthogonalRandomMatrix(2000, 4).get_2d_array()
+    P = GaussianOrthogonalRandomMatrix(2000, 4).sample()
     Q_hat = kernel_feature_creator(Q, P, is_query=True)
     K_hat = kernel_feature_creator(K, P, is_query=False)
     A = _attention(Q, K, 'nonlinear')
     A_hat = _attention(Q_hat, K_hat, 'linear')
     assert np.allclose(A, A_hat, atol=0.5)
-
-
-def test_kernel_feature_creator_regression():
-    with open('test/resources/regression_data.pkl', 'rb') as f:
-        data = pickle.load(f)
-    query, key, projection_matrix, expected_query_h, expected_key_h = data
-    query_h = kernel_feature_creator(query, projection_matrix, True)
-    key_h = kernel_feature_creator(key, projection_matrix, False)
-    assert np.allclose(key_h, expected_key_h)
-    assert np.allclose(query_h, expected_query_h)
 
 
 def _attention(Q, K, method='linear'):

@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 import tensorflow as tf
 
-from networks.build_attention import build_kernel_equation
+from performer.networks.build_attention import build_kernel_equation
 
 
 _CHR_IDX = string.ascii_lowercase
@@ -17,7 +17,7 @@ class GaussianOrthogonalRandomMatrix:
         self.scaling = scaling
         assert self.scaling in [0, 1], 'Scaling must be one of {0, 1}'
 
-    def get_2d_array(self):
+    def sample(self):
         shape = (self.rows, self.columns)
         unstructured_block = tf.random.normal(shape=shape)
         q, r = tf.linalg.qr(unstructured_block)
