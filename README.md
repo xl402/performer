@@ -27,14 +27,27 @@ from performer.networks.model import Performer
 
 layer = Performer(num_heads=2, # Number of attention heads
                   key_dim=2, # Size of each attention head for query and key
-                  attention_method='linear', # method for computing attention, 'linear' or 'quadratic'
+                  attention_method='linear', # attention method, 'linear' or 'quadratic'
 		  supports=2, # only used in 'linear' attention, number of random features
 		  attention_axes=None # axes over which the attention is applied.
 		  )
 target = tf.keras.Input(shape=[8, 16])
 source = tf.keras.Input(shape=[4, 16])
 output_tensor = layer(target, source)
+print(output_tensor.shape) # (None, 8, 16)
 ```
+
+`Performer` supports attention in any arbituary axis, below is an example of 2D
+self-attention over a 5D input tensor on axes 2 and 3.
+
+```python
+layer = Performer(num_heads=2, key_dim=2, attention_method='linear',
+                  supports=10, attention_axes=(2, 3))
+input_tensor = tf.keras.Input(shape=[5, 3, 4, 16])
+output_tensor = layer(input_tensor, input_tensor)
+print(output_tensor.shape)
+```
+
 
 
 ### Citations
