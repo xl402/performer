@@ -21,5 +21,5 @@ jobs:
     - name: Test with pytest
       run: |
         pwd
-        export PYTHONPATH=.
+        export PYTHONPATH=/home/runner/work/performer
         pytest
