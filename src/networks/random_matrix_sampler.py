@@ -45,6 +45,7 @@ class GaussianOrthogonalRandomMatrix:
 
 
 def kernel_feature_creator(data, projection_matrix, is_query):
+    """positive kernal features in arxiv 2009.14794.pdf p.4"""
     head_dim = tf.constant(data.shape[-1], dtype=tf.dtypes.float32)
     support_dim = tf.constant(projection_matrix.shape[0], dtype=tf.dtypes.float32)
     data_normalizer = 1.0 / (tf.math.sqrt(tf.math.sqrt(head_dim)))
