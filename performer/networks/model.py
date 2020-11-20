@@ -1,4 +1,3 @@
-import logging
 import math
 
 from tensorflow import multiply, einsum
@@ -13,9 +12,6 @@ from performer.networks.build_attention import build_normalisation_equation
 from performer.networks.build_attention import build_quadratic_attention_equation
 from performer.networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
 from performer.networks.random_matrix_sampler import kernel_feature_creator
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 class Performer(MultiHeadAttention):
