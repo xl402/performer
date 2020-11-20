@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 import tensorflow as tf
 
-from networks.build_attention import build_kernel_equation
+from performer.networks.build_attention import build_kernel_equation
 
 
 _CHR_IDX = string.ascii_lowercase

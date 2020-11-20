@@ -5,8 +5,8 @@ import pickle
 import pytest
 import tensorflow as tf
 
-from networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix
-from networks.random_matrix_sampler import kernel_feature_creator
+from performer.networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix
+from performer.networks.random_matrix_sampler import kernel_feature_creator
 
 
 # data_shape, projection_matrix_shape, expected_shape
@@ -63,16 +63,6 @@ def test_kernel_feature_creator_approximates_attention():
     A = _attention(Q, K, 'nonlinear')
     A_hat = _attention(Q_hat, K_hat, 'linear')
     assert np.allclose(A, A_hat, atol=0.5)
-
-
-def test_kernel_feature_creator_regression():
-    with open('test/resources/regression_data.pkl', 'rb') as f:
-        data = pickle.load(f)
-    query, key, projection_matrix, expected_query_h, expected_key_h = data
-    query_h = kernel_feature_creator(query, projection_matrix, True)
-    key_h = kernel_feature_creator(key, projection_matrix, False)
-    assert np.allclose(key_h, expected_key_h)
-    assert np.allclose(query_h, expected_query_h)
 
 
 def _attention(Q, K, method='linear'):
