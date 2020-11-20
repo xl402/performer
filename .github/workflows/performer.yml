@@ -20,6 +20,5 @@ jobs:
         pip install -r requirements.txt
     - name: Test with pytest
       run: |
-        ls
-        export PYTHONPATH=/home/runner/work/performer/performer
-        pytest
+        export PYTHONPATH=performer/
+        pytest -v
