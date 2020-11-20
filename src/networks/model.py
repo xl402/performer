@@ -32,9 +32,31 @@ class Performer(MultiHeadAttention):
             self._build_attention_equation = build_linear_attention_equation
             self._check_supports_is_not_none()
             self.sampler = GOR(self.supports, kwargs['key_dim'], self.scaling)
-            self._random_features = self.sampler.get_2d_array()
+            self._random_features = self._get_inference_time_random_features(kwargs)
             self._build_normalisation_equation = build_normalisation_equation
+        kwargs.pop('_random_features', None)
         super().__init__(*args, **kwargs)
+
+    def get_config(self):
+        performer_config = {
+            "attention_method":
+                self.attention_method,
+            "supports":
+                self.supports,
+        }
+        if hasattr(self, '_random_features'):
+            random_features = self._random_features.numpy()
+            performer_config['_random_features'] = random_features
+        config = super().get_config()
+        config.update(performer_config)
+        return config
+
+    def _get_inference_time_random_features(self, kwargs):
+        if '_random_features' in kwargs:
+            return tf.constant(kwargs['_random_features'], name='_random_features')
+        else:
+            random_features = self.sampler.get_2d_array()
+            return tf.constant(random_features, name='_random_features')
 
     def _check_supports_is_not_none(self):
         if self.supports is None:

@@ -3,6 +3,7 @@ from itertools import product
 import numpy as np
 import pytest
 import tensorflow as tf
+from tensorflow.keras.models import load_model
 
 from networks.model import Performer
 
@@ -28,29 +29,29 @@ def get_fitted_model(**kwargs):
 
 
 @pytest.mark.parametrize('attn_method', ATTN_METHODS)
-def test_save_model_to_h5_format(tmpdir, attn_method):
+def test_can_save_in_h5_format(tmpdir, attn_method):
     kwargs = {'num_heads': 2, 'key_dim': 20,
               'attention_method': attn_method, 'supports':2}
     model, (x, y) = get_fitted_model(**kwargs)
-    model.save(tmpdir.join('saved_model.h5'))
-    load_model = tf.keras.models.load_model(tmpdir.join('saved_model.h5'),
-                                            custom_objects={'Performer': Performer})
-    load_model.layers[1] = model.layers[1]
-    result1 = model.predict(x)
-    result2 = load_model.predict(x)
-    assert np.allclose(result1, result2)
+    model.save(tmpdir.join('model.h5'))
+    reconstructed_model = load_model(tmpdir.join('model.h5'),
+                                     custom_objects={'Performer': Performer})
+    reconstructed_model.layers[1] = model.layers[1]
+    result = model.predict(x)
+    reconstructed_result = reconstructed_model.predict(x)
+    assert np.allclose(result, reconstructed_result)
 
 
 @pytest.mark.parametrize('attn_method', ATTN_METHODS)
-def test_save_model_to_serial_object(tmpdir, attn_method):
+def test_can_save_as_tensorflow_model(tmpdir, attn_method):
     kwargs = {'num_heads': 2, 'key_dim': 20,
               'attention_method': attn_method, 'supports':2}
     model, (x, y) = get_fitted_model(**kwargs)
-    model.save(tmpdir.join('saved_model'))
-    load_model = tf.keras.models.load_model(tmpdir.join('saved_model'))
-    result1 = model.predict(x)
-    result2 = load_model.predict(x)
-    assert np.allclose(result1, result2)
+    model.save(tmpdir.join('model'))
+    reconstructed_model = load_model(tmpdir.join('model'))
+    result = model.predict(x)
+    reconstructed_result = reconstructed_model.predict(x)
+    assert np.allclose(result, reconstructed_result)
 
 
 @pytest.mark.parametrize('inputs, attn_method', product(INPUT_SHAPES, ATTN_METHODS))
