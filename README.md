@@ -9,7 +9,12 @@ An implementation of <a href="https://arxiv.org/abs/2009.14794">Performer</a>, a
 
 
 ### Initial Setup
-This repo requires Python 3.7 and above. Install requirements by running:
+Create a Python 3 virtual environment and activate:
+```
+virtualenv -p python3 env
+source ./env/bin/activate
+```
+Install requirements by running:
 ```
 pip install -r requirements.txt
 ```
@@ -20,7 +25,7 @@ export PYTHONPATH=$PATH_TO_REPO/performer
 To test the scripts, run `pytest` in the root directory
 
 ### Usage
-`Performer` inherites tensorflow's `MultiHeadAttention` and is made to be fully
+`Performer` inherites from tensorflow's `MultiHeadAttention` and is made to be fully
 compatible with the parents' use cases, with added flexibility for performing attention in linear time and space complexity.
 ```python
 from performer.networks.model import Performer
@@ -34,7 +39,8 @@ layer = Performer(num_heads=2, # Number of attention heads
 target = tf.keras.Input(shape=[8, 16])
 source = tf.keras.Input(shape=[4, 16])
 output_tensor = layer(target, source)
-print(output_tensor.shape) # (None, 8, 16)
+print(output_tensor.shape)
+# (None, 8, 16)
 ```
 
 `Performer` supports attention in any arbituary axis, below is an example of 2D
@@ -46,6 +52,7 @@ layer = Performer(num_heads=2, key_dim=2, attention_method='linear',
 input_tensor = tf.keras.Input(shape=[5, 3, 4, 16])
 output_tensor = layer(input_tensor, input_tensor)
 print(output_tensor.shape)
+# (None, 5, 3, 4, 16)
 ```
 
 
