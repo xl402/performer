@@ -5,7 +5,7 @@ import pytest
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
-from performer.networks.model import Performer
+from performer.networks.linear_attention import Performer
 
 INPUT_SHAPES = [([1, 18, 16], [1, 4, 12], [1, 4, 12], (1,)),
                 ([1, 5, 3, 16], [1, 5, 4, 16], [1, 5, 4, 12], (1, 2)),
