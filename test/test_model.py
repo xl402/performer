@@ -20,7 +20,7 @@ def get_fitted_model(**kwargs):
     x = tf.random.uniform(shape=(2, 4, 3))
     y = tf.random.uniform(shape=(2, 4, 3))
     inputs = tf.keras.layers.Input(shape=[4, 3])
-    outputs = layer(inputs, inputs)
+    outputs = layer([inputs, inputs])
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     model.compile("adam", "mean_squared_error")
     model.fit(x, y, epochs=1)
@@ -63,7 +63,7 @@ def test_performer_output_is_same_shape_as_query(inputs, attn_method):
     query = tf.random.uniform(shape=q_shape, dtype='float32')
     value = tf.random.uniform(shape=v_shape, dtype='float32')
     key = tf.random.uniform(shape=k_shape, dtype='float32')
-    output_tensor = layer(query, value, key)
+    output_tensor = layer([query, key, value])
     assert all(np.array(output_tensor.shape) == q_shape)
 
 
@@ -81,8 +81,8 @@ def test_performer_linear_attention_approximates_quadratic_attention(inputs, num
     value = tf.random.uniform(shape=v_shape, dtype='float32')
     key = tf.random.uniform(shape=k_shape, dtype='float32')
 
-    approx_output = approx_layer(query, value, key)
-    exact_output = exact_layer(query, value, key)
+    approx_output = approx_layer([query, key, value])
+    exact_output = exact_layer([query, key, value])
     assert np.allclose(approx_output, exact_output, atol=1e-3)
 
 
@@ -90,7 +90,7 @@ def test_performer_linear_attention_approximates_quadratic_attention(inputs, num
 def test_performer_is_compatible_with_keras_input_layer(attn_method):
     layer = Performer(num_heads=2, key_dim=20, attention_method=attn_method, supports=1)
     query = tf.keras.layers.Input(shape=[4, 3])
-    out = layer(query, query)
+    out = layer([query, query])
     np.testing.assert_array_equal(out.shape, [None, 4, 3])
 
 
