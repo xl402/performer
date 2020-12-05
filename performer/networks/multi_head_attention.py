@@ -14,7 +14,6 @@
 # limitations under the License.
 # ==============================================================================
 """Keras-based attention layer."""
-# pylint: disable=g-classes-have-attributes
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -366,11 +365,3 @@ class MultiHeadAttention(Layer):
     attention_output = self._output_dense(attention_output)
 
     return attention_output
-
-if __name__ == '__main__':
-    import tensorflow as tf
-    layer = MultiHeadAttention(num_heads=2, key_dim=2)
-    query = tf.random.uniform(shape=[1, 8, 16], dtype='float32')
-    value = tf.random.uniform(shape=[1, 4, 16], dtype='float32')
-    key = tf.random.uniform(shape=[1, 4, 16], dtype='float32')
-    output_tensor = layer([query, key])
