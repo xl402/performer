@@ -1,2 +1,2 @@
 numpy==1.18.5
-tf-nightly==2.5.0.dev20201107
+tensorflow==2.3.1
