@@ -15,19 +15,6 @@ NUM_HEADS = [1, 3, 5]
 KEY_DIMS = [1, 5]
 
 
-def get_fitted_model(**kwargs):
-    layer = Performer(**kwargs)
-    x = tf.random.uniform(shape=(2, 4, 3))
-    y = tf.random.uniform(shape=(2, 4, 3))
-    inputs = tf.keras.layers.Input(shape=[4, 3])
-    outputs = layer([inputs, inputs])
-    model = tf.keras.Model(inputs=inputs, outputs=outputs)
-    model.compile("adam", "mean_squared_error")
-    model.fit(x, y, epochs=1)
-    fitting_data = (x, y)
-    return model, fitting_data
-
-
 @pytest.mark.parametrize('attn_method', ATTN_METHODS)
 def test_can_save_in_h5_format(tmpdir, attn_method):
     kwargs = {'num_heads': 2, 'key_dim': 20,
@@ -108,3 +95,16 @@ def test_performer_freezes_during_inference_time(attn_method):
     y1 = model.predict(x)
     y2 = model.predict(x)
     assert np.allclose(y1, y2)
+
+
+def get_fitted_model(**kwargs):
+    layer = Performer(**kwargs)
+    x = tf.random.uniform(shape=(2, 4, 3))
+    y = tf.random.uniform(shape=(2, 4, 3))
+    inputs = tf.keras.layers.Input(shape=[4, 3])
+    outputs = layer([inputs, inputs])
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    model.compile("adam", "mean_squared_error")
+    model.fit(x, y, epochs=1)
+    fitting_data = (x, y)
+    return model, fitting_data
