@@ -22,10 +22,11 @@ Then export project to python path:
 ```
 export PYTHONPATH=$PATH_TO_REPO/performer
 ```
-To test the scripts, run `pytest` in the root directory
+To test the scripts, run `pytest` in the root directory, you may wish to
+install `pytest` separately
 
 ### Usage
-`Performer` inherites from tensorflow's `MultiHeadAttention` and is made to be fully
+`Performer` inherites from a lightly modified version of tf-nightly's `MultiHeadAttention` and is made to be fully
 compatible with the parents' use cases, with added flexibility for performing attention in linear time and space complexity.
 ```python
 from performer.networks.model import Performer
@@ -36,9 +37,9 @@ layer = Performer(num_heads=2, # Number of attention heads
 		  supports=2, # only used in 'linear' attention, number of random features
 		  attention_axes=None # axes over which the attention is applied.
 		  )
-target = tf.keras.Input(shape=[8, 16])
-source = tf.keras.Input(shape=[4, 16])
-output_tensor = layer(target, source)
+query = tf.keras.Input(shape=[8, 16])
+key = tf.keras.Input(shape=[4, 16])
+output_tensor = layer([query, key])
 print(output_tensor.shape)
 # (None, 8, 16)
 ```
@@ -50,7 +51,7 @@ self-attention over a 5D input tensor on axes 2 and 3.
 layer = Performer(num_heads=2, key_dim=2, attention_method='linear',
                   supports=10, attention_axes=(2, 3))
 input_tensor = tf.keras.Input(shape=[5, 3, 4, 16])
-output_tensor = layer(input_tensor, input_tensor)
+output_tensor = layer([input_tensor, input_tensor])
 print(output_tensor.shape)
 # (None, 5, 3, 4, 16)
 ```
