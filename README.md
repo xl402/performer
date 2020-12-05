@@ -28,8 +28,10 @@ install `pytest` separately
 ### Usage
 `Performer` inherites from a lightly modified version of tf-nightly's `MultiHeadAttention` and is made to be fully
 compatible with the parents' use cases, with added flexibility for performing attention in linear time and space complexity.
+
+Currently masked attention is not supported. To use performer:
 ```python
-from performer.networks.model import Performer
+from performer.networks.linear_attention import Performer
 
 layer = Performer(num_heads=2, # Number of attention heads
                   key_dim=2, # Size of each attention head for query and key
