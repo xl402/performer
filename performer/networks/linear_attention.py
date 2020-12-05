@@ -1,7 +1,8 @@
 import math
+from functools import partial
 
 from tensorflow import multiply, einsum
-from tensorflow.keras.layers import MultiHeadAttention
+from tensorflow.keras.activations import softmax
 from tensorflow.python.keras.layers import advanced_activations
 from tensorflow.python.keras.layers import core
 import numpy as np
@@ -10,6 +11,7 @@ import tensorflow as tf
 from performer.networks.build_attention import build_linear_attention_equation
 from performer.networks.build_attention import build_normalisation_equation
 from performer.networks.build_attention import build_quadratic_attention_equation
+from performer.networks.multi_head_attention import MultiHeadAttention
 from performer.networks.random_matrix_sampler import GaussianOrthogonalRandomMatrix as GOR
 from performer.networks.random_matrix_sampler import kernel_feature_creator
 
@@ -24,10 +26,9 @@ class Performer(MultiHeadAttention):
     Examples:
     >>> layer = Performer(num_heads=2, key_dim=2,
                           attention_method='linear', supports=2)
-    >>> target = tf.keras.Input(shape=[8, 16])
-    >>> source = tf.keras.Input(shape=[4, 16])
-    >>> output_tensor, weights = layer(target, source,
-      ...                              return_attention_scores=True)
+    >>> query = tf.keras.Input(shape=[8, 16])
+    >>> key = tf.keras.Input(shape=[4, 16])
+    >>> output_tensor = layer([query, key])
     >>> print(output_tensor.shape)
     (None, 8, 16)
     >>> print(weights.shape)
@@ -82,24 +83,22 @@ class Performer(MultiHeadAttention):
         self._norm_axes = norm_axes
 
     def _add_soft_max_and_dropout_layers(self):
-        self._softmax = advanced_activations.Softmax(axis=self._norm_axes)
+        self._softmax = partial(softmax, axis=self._norm_axes)
         self._dropout_layer = core.Dropout(rate=self._dropout)
 
     def _add_normalisation_equation(self, rank):
         result = self._build_normalisation_equation(rank, self._attention_axes)
         self._k1_equation, self._q_k1_equation, self._qk1_q_equation = result
 
-    def quadratic_attention(self, query, key, value, attention_mask=None, training=None):
+    def quadratic_attention(self, query, key, value, training=None):
         query = multiply(query, 1. / math.sqrt(float(self._key_dim)))
         attention_scores = einsum(self._dot_product_equation, key, query)
-        attention_scores = self._masked_softmax(attention_scores, attention_mask)
+        attention_scores = self._softmax(attention_scores)
         attention_scores_dropout = self._dropout_layer(attention_scores, training=training)
         attention_output = einsum(self._combine_equation, attention_scores_dropout, value)
         return attention_output, attention_scores
 
-    def linear_attention(self, query, key, value, attention_mask=None, training=None):
-        if attention_mask is not None:
-            raise(NotImplementedError('masked linear attention not implemented'))
+    def linear_attention(self, query, key, value, training=None):
         random_features = self._get_random_features(training)
         lifted_query = kernel_feature_creator(query, random_features, True)
         lifted_key = kernel_feature_creator(key, random_features, False)

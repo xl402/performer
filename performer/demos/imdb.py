@@ -32,7 +32,7 @@ class TransformerBlock(layers.Layer):
         self.dropout2 = layers.Dropout(rate)
 
     def call(self, inputs, training):
-        attn_output = self.att(inputs, inputs)
+        attn_output = self.att([inputs, inputs])
         attn_output = self.dropout1(attn_output, training=training)
         out1 = self.layernorm1(inputs + attn_output)
         ffn_output = self.ffn(out1)
