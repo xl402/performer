@@ -26,10 +26,9 @@ class Performer(MultiHeadAttention):
     Examples:
     >>> layer = Performer(num_heads=2, key_dim=2,
                           attention_method='linear', supports=2)
-    >>> target = tf.keras.Input(shape=[8, 16])
-    >>> source = tf.keras.Input(shape=[4, 16])
-    >>> output_tensor, weights = layer(target, source,
-      ...                              return_attention_scores=True)
+    >>> query = tf.keras.Input(shape=[8, 16])
+    >>> key = tf.keras.Input(shape=[4, 16])
+    >>> output_tensor = layer([query, key])
     >>> print(output_tensor.shape)
     (None, 8, 16)
     >>> print(weights.shape)
