@@ -1,5 +1,6 @@
 # Tensorflow Implementation of Performer
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/xl402/performer/performer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 An implementation of <a href="https://arxiv.org/abs/2009.14794">Performer</a>, a linear attention-based transformer variant with a **F**ast **A**ttention **V**ia positive **O**rthogonal **R**andom features approach (FAVOR+).
